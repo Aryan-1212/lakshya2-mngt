@@ -82,7 +82,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));
+app.get('/api/health', (req, res) => res.status(200).send("OK"));
 
 // 404 handler
 app.use((req, res) => {
