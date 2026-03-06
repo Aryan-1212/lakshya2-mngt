@@ -12,6 +12,7 @@ node_modules/
 # Build outputs
 client/dist/
 client/build/
+reset-password.js
 
 # Logs
 npm-debug.log*
