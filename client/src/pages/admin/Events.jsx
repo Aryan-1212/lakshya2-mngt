@@ -43,7 +43,7 @@ function EventForm({ initial, onSubmit, loading }) {
 
     return (
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="col-span-2"><label className="label">Event Name *</label><input className="input" value={form.name} onChange={f('name')} required /></div>
                 <div><label className="label">Type</label>
                     <select className="input" value={form.type} onChange={f('type')}>

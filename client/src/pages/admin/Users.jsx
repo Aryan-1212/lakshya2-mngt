@@ -152,13 +152,13 @@ export default function AdminUsers() {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
-                <input className="input max-w-full sm:max-w-xs" placeholder="Search by name or email..." value={filters.search} onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))} />
+                <input className="input w-full sm:max-w-xs" placeholder="Search by name or email..." value={filters.search} onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))} />
             </div>
 
             {isLoading ? <div className="flex items-center justify-center h-40"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-500" /></div> : (
                 <>
                     {/* Desktop Table View */}
-                    <div className="table-wrapper hidden md:block">
+                    <div className="table-wrapper hidden lg:block">
                         <table className="table">
                             <thead>
                                 <tr>
@@ -237,11 +237,11 @@ export default function AdminUsers() {
                     </div>
 
                     {/* Mobile Card View */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
                         {users.map((u) => (
                             <div key={u._id} className="card flex flex-col gap-3">
                                 <div className="flex justify-between items-start">
-                                    <div>
+                                    <div className="min-w-0">
                                         <h3 className="font-bold text-white text-base">{u.name}</h3>
                                         <p className="text-xs text-gray-400 break-all">{u.email}</p>
                                         {u.phone && <p className="text-xs text-gray-400 font-mono mt-0.5">📞 {u.phone}</p>}

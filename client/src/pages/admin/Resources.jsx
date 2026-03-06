@@ -139,7 +139,7 @@ function ResourceForm({ onSubmit, loading }) {
                 </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><label className="label">Scope</label>
                     <select className="input" value={form.scope} onChange={f('scope')}>
                         <option value="global">🌐 Global</option>
@@ -227,16 +227,16 @@ export default function AdminResources() {
 
     return (
         <div className="space-y-5 animate-fade-in">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-3">
                 <h1 className="page-title mb-0">📁 Resources ({total})</h1>
                 <button onClick={() => setModal(true)} className="btn-primary">➕ Add Resource</button>
             </div>
 
             {/* Scope Tabs */}
-            <div className="flex gap-4 border-b border-dark-500 mb-2">
+            <div className="flex gap-4 border-b border-dark-500 mb-2 overflow-x-auto pb-1">
                 {['all', 'global', 'team', 'role'].map(s => (
                     <button key={s} onClick={() => { setFilters(f => ({ ...f, scope: s })); setPage(1); }}
-                        className={`pb-2 px-1 border-b-2 font-medium capitalize transition-colors ${filters.scope === s ? 'border-primary-500 text-primary-400' : 'border-transparent text-gray-400 hover:text-white'}`}>
+                        className={`pb-2 px-1 border-b-2 font-medium capitalize transition-colors whitespace-nowrap ${filters.scope === s ? 'border-primary-500 text-primary-400' : 'border-transparent text-gray-400 hover:text-white'}`}>
                         {s} Resources
                     </button>
                 ))}
@@ -251,7 +251,7 @@ export default function AdminResources() {
                         {CATEGORY_ICON(c)} {c}
                     </button>
                 ))}
-                <div className="ml-auto">
+                <div className="w-full sm:w-auto sm:ml-auto">
                     <label className="flex items-center gap-2 cursor-pointer text-sm">
                         <input type="checkbox" checked={filters.isCAResource} onChange={(e) => { setFilters(f => ({ ...f, isCAResource: e.target.checked })); setPage(1); }} className="accent-pink-500" />
                         <span className="text-gray-300">🎓 CA Only</span>
@@ -260,8 +260,8 @@ export default function AdminResources() {
             </div>
 
             <div className="flex gap-3 flex-wrap">
-                <input className="input max-w-xs" placeholder="🔍 Search title/tags..." value={filters.search} onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} />
-                <select className="input w-36" value={filters.type} onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))}>
+                <input className="input w-full sm:max-w-xs" placeholder="🔍 Search title/tags..." value={filters.search} onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))} />
+                <select className="input w-full sm:w-36" value={filters.type} onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))}>
                     <option value="">All Types</option>
                     {['file', 'link', 'text'].map((t) => <option key={t} value={t}>{TYPE_ICON[t]} {t}</option>)}
                 </select>
