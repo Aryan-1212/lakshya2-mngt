@@ -175,7 +175,7 @@ export default function LoginPage() {
 
                     {/* <div className="mt-6 pt-5 border-t border-dark-500">
                         <p className="text-xs text-gray-500 text-center mb-3">🔑 Demo Credentials — click to fill</p>
-                        <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
                             {[
                                 ['admin@techfest.com', 'Admin@123', 'Admin', 'text-red-400', 'admin'],
                                 ['faculty@techfest.com', 'Faculty@123', 'Faculty', 'text-yellow-400', 'faculty'],

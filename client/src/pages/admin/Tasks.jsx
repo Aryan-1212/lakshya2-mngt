@@ -48,7 +48,7 @@ function TaskForm({ initial, teamId: forcedTeamId, onSubmit, loading }) {
                 </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><label className="label">Priority</label>
                     <select className="input" value={form.priority} onChange={f('priority')}>
                         {['low', 'medium', 'high', 'urgent'].map((p) => <option key={p} value={p}>{`${PRIORITY_MAP[p].emoji} ${p}`}</option>)}
@@ -178,52 +178,85 @@ export default function AdminTasks() {
 
     return (
         <div className="space-y-5 animate-fade-in">
-            <div className="flex items-center justify-between">
-                <h1 className="page-title mb-0">✅ Tasks ({total})</h1>
-                <button onClick={() => setModal({ type: 'create' })} className="btn-primary">➕ Create Task</button>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h1 className="page-title mb-0 text-xl sm:text-2xl">✅ Tasks ({total})</h1>
+                <button onClick={() => setModal({ type: 'create' })} className="btn-primary w-full sm:w-auto justify-center">➕ Create Task</button>
             </div>
 
-            <div className="flex gap-3 flex-wrap">
-                <select className="input max-w-xs" value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
+            <div className="flex flex-col sm:flex-row gap-3">
+                <select className="input w-full sm:max-w-xs" value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
                     <option value="">All Statuses</option>
                     {Object.keys(STATUS_MAP).map((s) => <option key={s} value={s}>{STATUS_MAP[s].label}</option>)}
                 </select>
-                <select className="input max-w-xs" value={filters.priority} onChange={(e) => setFilters((f) => ({ ...f, priority: e.target.value }))}>
+                <select className="input w-full sm:max-w-xs" value={filters.priority} onChange={(e) => setFilters((f) => ({ ...f, priority: e.target.value }))}>
                     <option value="">All Priorities</option>
                     {['low', 'medium', 'high', 'urgent'].map((p) => <option key={p} value={p}>{`${PRIORITY_MAP[p].emoji} ${p}`}</option>)}
                 </select>
             </div>
 
             {isLoading ? <div className="flex items-center justify-center h-40"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-500" /></div> : (
-                <div className="table-wrapper">
-                    <table className="table">
-                        <thead><tr><th>Title</th><th>Team</th><th>Assignees</th><th>Priority</th><th>Status</th><th>Deadline</th><th>Pts</th><th>Actions</th></tr></thead>
-                        <tbody>
-                            {tasks.map((t) => (
-                                <tr key={t._id}>
-                                    <td className="font-medium text-white max-w-xs truncate">{t.title}</td>
-                                    <td>{t.teamId?.name ? <span className="badge-gray">{t.teamId.name}</span> : '—'}</td>
-                                    <td className="text-gray-400 text-xs">{t.assignees?.length > 0 ? t.assignees.map((a) => a.name).join(', ') : <span className="text-gray-500">Unassigned</span>}</td>
-                                    <td><span className={`${PRIORITY_MAP[t.priority]?.class || 'badge-gray'} badge`}>{PRIORITY_MAP[t.priority]?.emoji} {t.priority}</span></td>
-                                    <td><span className={STATUS_MAP[t.status]?.class}>{STATUS_MAP[t.status]?.label}</span></td>
-                                    <td className="text-gray-400 text-xs">{t.deadline ? new Date(t.deadline).toLocaleDateString() : '—'}</td>
-                                    <td className="text-primary-400 font-bold">{t.basePoints}</td>
-                                    <td>
-                                        <div className="flex gap-1 flex-wrap">
-                                            <button onClick={() => setModal({ type: 'view-subs', taskId: t._id, taskTitle: t.title, basePoints: t.basePoints })} className="btn-secondary py-1 px-2 text-xs tooltip-trigger" title="View Submissions">👀</button>
-                                            <button onClick={() => setModal({ type: 'edit', task: t })} className="btn-secondary py-1 px-2 text-xs tooltip-trigger" title="Edit Task">✏️</button>
-                                            {t.status !== 'closed' && t.status !== 'verified' && (
-                                                <button onClick={() => { setCloseNote(''); setModal({ type: 'close', taskId: t._id, taskTitle: t.title }) }} className="bg-gray-600/30 text-gray-300 hover:bg-gray-500/30 py-1 px-2 text-xs rounded font-medium transition-colors" title="Close Task">🔒</button>
-                                            )}
-                                            <button onClick={() => { if (window.confirm('Delete this task?')) deleteMut.mutate(t._id) }} className="btn-danger py-1 px-2 text-xs tooltip-trigger" title="Delete Task">🗑️</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {tasks.length === 0 && <tr><td colSpan={8} className="text-center text-gray-500 py-8">No tasks found</td></tr>}
-                        </tbody>
-                    </table>
-                </div>
+                <>
+                    {/* Desktop Table View */}
+                    <div className="table-wrapper hidden md:block">
+                        <table className="table">
+                            <thead><tr><th>Title</th><th>Team</th><th>Assignees</th><th>Priority</th><th>Status</th><th>Deadline</th><th>Pts</th><th>Actions</th></tr></thead>
+                            <tbody>
+                                {tasks.map((t) => (
+                                    <tr key={t._id}>
+                                        <td className="font-medium text-white max-w-xs truncate">{t.title}</td>
+                                        <td>{t.teamId?.name ? <span className="badge-gray">{t.teamId.name}</span> : '—'}</td>
+                                        <td className="text-gray-400 text-xs">{t.assignees?.length > 0 ? t.assignees.map((a) => a.name).join(', ') : <span className="text-gray-500">Unassigned</span>}</td>
+                                        <td><span className={`${PRIORITY_MAP[t.priority]?.class || 'badge-gray'} badge`}>{PRIORITY_MAP[t.priority]?.emoji} {t.priority}</span></td>
+                                        <td><span className={STATUS_MAP[t.status]?.class}>{STATUS_MAP[t.status]?.label}</span></td>
+                                        <td className="text-gray-400 text-xs">{t.deadline ? new Date(t.deadline).toLocaleDateString() : '—'}</td>
+                                        <td className="text-primary-400 font-bold">{t.basePoints}</td>
+                                        <td>
+                                            <div className="flex gap-1 flex-wrap">
+                                                <button onClick={() => setModal({ type: 'view-subs', taskId: t._id, taskTitle: t.title, basePoints: t.basePoints })} className="btn-secondary py-1 px-2 text-xs tooltip-trigger" title="View Submissions">👀</button>
+                                                <button onClick={() => setModal({ type: 'edit', task: t })} className="btn-secondary py-1 px-2 text-xs tooltip-trigger" title="Edit Task">✏️</button>
+                                                {t.status !== 'closed' && t.status !== 'verified' && (
+                                                    <button onClick={() => { setCloseNote(''); setModal({ type: 'close', taskId: t._id, taskTitle: t.title }) }} className="bg-gray-600/30 text-gray-300 hover:bg-gray-500/30 py-1 px-2 text-xs rounded font-medium transition-colors" title="Close Task">🔒</button>
+                                                )}
+                                                <button onClick={() => { if (window.confirm('Delete this task?')) deleteMut.mutate(t._id) }} className="btn-danger py-1 px-2 text-xs tooltip-trigger" title="Delete Task">🗑️</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {tasks.length === 0 && <tr><td colSpan={8} className="text-center text-gray-500 py-8">No tasks found</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
+                        {tasks.map((t) => (
+                            <div key={t._id} className="card flex flex-col gap-3">
+                                <div>
+                                    <h3 className="font-bold text-white text-base leading-tight">{t.title}</h3>
+                                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                                        {t.teamId?.name ? <span className="badge-gray text-[10px]">{t.teamId.name}</span> : <span className="text-gray-500 text-xs">—</span>}
+                                        <span className={`${PRIORITY_MAP[t.priority]?.class || 'badge-gray'} badge text-[10px]`}>{PRIORITY_MAP[t.priority]?.emoji} {t.priority}</span>
+                                        <span className={`${STATUS_MAP[t.status]?.class} text-[10px]`}>{STATUS_MAP[t.status]?.label}</span>
+                                        <span className="text-primary-400 font-bold text-xs ml-auto">{t.basePoints} pts</span>
+                                    </div>
+                                </div>
+                                <div className="text-xs text-gray-400 space-y-1">
+                                    <p><span className="font-semibold text-gray-300">Deadline:</span> {t.deadline ? new Date(t.deadline).toLocaleDateString() : '—'}</p>
+                                    <p><span className="font-semibold text-gray-300">Assignees:</span> {t.assignees?.length > 0 ? t.assignees.map((a) => a.name).join(', ') : <span className="text-gray-500">Unassigned</span>}</p>
+                                </div>
+                                <div className="flex gap-2 pt-3 border-t border-dark-500 mt-auto flex-wrap">
+                                    <button onClick={() => setModal({ type: 'view-subs', taskId: t._id, taskTitle: t.title, basePoints: t.basePoints })} className="btn-secondary py-1.5 px-2 text-xs flex-1 justify-center" title="View Submissions">👀 View</button>
+                                    <button onClick={() => setModal({ type: 'edit', task: t })} className="btn-secondary py-1.5 px-2 text-xs flex-1 justify-center" title="Edit Task">✏️ Edit</button>
+                                    {t.status !== 'closed' && t.status !== 'verified' && (
+                                        <button onClick={() => { setCloseNote(''); setModal({ type: 'close', taskId: t._id, taskTitle: t.title }) }} className="btn-secondary py-1.5 px-2 text-xs flex-1 justify-center transition-colors" title="Close Task">🔒 Close</button>
+                                    )}
+                                    <button onClick={() => { if (window.confirm('Delete this task?')) deleteMut.mutate(t._id) }} className="btn-danger py-1.5 px-3 text-xs w-auto justify-center" title="Delete Task">🗑️</button>
+                                </div>
+                            </div>
+                        ))}
+                        {tasks.length === 0 && <div className="col-span-1 sm:col-span-2 text-center text-gray-500 py-8 card">No tasks found</div>}
+                    </div>
+                </>
             )}
 
             {pages > 1 && (

@@ -52,7 +52,7 @@ function UserForm({ initial, onSubmit, loading }) {
 
     return (
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><label className="label">Name</label><input className="input" value={form.name} onChange={f('name')} required /></div>
                 <div><label className="label">Email</label><input type="email" className="input" value={form.email} onChange={f('email')} required={!initial} /></div>
             </div>
@@ -117,13 +117,13 @@ export default function TeamMembers() {
 
     return (
         <div className="space-y-5 animate-fade-in">
-            <div className="flex items-center justify-between">
-                <h1 className="page-title mb-0">👥 Team Members</h1>
-                <button onClick={() => setModal({ type: 'create' })} className="btn-primary">➕ Add Member</button>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h1 className="page-title mb-0 text-xl sm:text-2xl">👥 Team Members</h1>
+                <button onClick={() => setModal({ type: 'create' })} className="btn-primary w-full sm:w-auto justify-center">➕ Add Member</button>
             </div>
 
-            <div className="flex gap-3">
-                <input className="input max-w-xs" placeholder="Search team members..." value={search} onChange={(e) => setSearch(e.target.value)} />
+            <div className="flex flex-col sm:flex-row gap-3">
+                <input className="input max-w-full sm:max-w-xs" placeholder="Search team members..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
 
             {isLoading ? <div className="flex items-center justify-center h-40"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-500" /></div> : (

@@ -160,7 +160,7 @@ export default function AdminEvents() {
                             )}
                         </div>
                     ))}
-                    {events.length === 0 && <div className="col-span-2 card text-center text-gray-500 py-10">No events yet</div>}
+                    {events.length === 0 && <div className="col-span-1 md:col-span-2 card text-center text-gray-500 py-10">No events yet</div>}
                 </div>
             )}
 

@@ -91,9 +91,9 @@ export default function AdminTeams() {
 
     return (
         <div className="space-y-5 animate-fade-in">
-            <div className="flex items-center justify-between">
-                <h1 className="page-title mb-0">🏷️ Teams ({teams.length})</h1>
-                <button onClick={() => setModal({ type: 'create' })} className="btn-primary">➕ Add Team</button>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h1 className="page-title mb-0 text-xl sm:text-2xl">🏷️ Teams ({teams.length})</h1>
+                <button onClick={() => setModal({ type: 'create' })} className="btn-primary w-full sm:w-auto justify-center">➕ Add Team</button>
             </div>
 
             {isLoading ? <div className="flex items-center justify-center h-40"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-500" /></div> : (

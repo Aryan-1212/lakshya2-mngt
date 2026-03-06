@@ -35,7 +35,8 @@ function ReferralCodeCard({ referralInfo }) {
                 </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
                 <div className="text-center">
                     <div className="text-xl font-bold">{referralInfo.totalReferrals}</div>
                     <div className="text-xs opacity-90">Total</div>

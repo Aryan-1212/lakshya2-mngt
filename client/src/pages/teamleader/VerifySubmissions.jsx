@@ -34,13 +34,14 @@ export default function VerifySubmissions() {
         <div className="space-y-5 animate-fade-in">
             <h1 className="page-title">✔️ Verify Submissions</h1>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
                 {['pending', 'verified', 'rejected'].map((s) => (
-                    <button key={s} onClick={() => setFilter(s)} className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${filter === s ? 'bg-primary-500 border-primary-500 text-white' : 'bg-dark-700 border-dark-500 text-gray-400'}`}>
+                    <button key={s} onClick={() => setFilter(s)} className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all flex-1 sm:flex-none ${filter === s ? 'bg-primary-500 border-primary-500 text-white' : 'bg-dark-700 border-dark-500 text-gray-400'}`}>
                         {s === 'pending' ? '⏳' : s === 'verified' ? '✅' : '❌'} {s.charAt(0).toUpperCase() + s.slice(1)}
                     </button>
                 ))}
             </div>
+
 
             {isLoading ? <div className="flex items-center justify-center h-40"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-500" /></div> : (
                 <div className="space-y-3">

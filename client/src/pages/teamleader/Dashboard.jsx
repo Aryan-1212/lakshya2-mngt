@@ -28,7 +28,8 @@ export default function TLDashboard() {
                 <p className="text-gray-400 text-sm -mt-4">{stats?.team?.name} — Welcome, {user?.name}</p>
             </div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
                 <StatCard icon="👥" label="Members" value={stats?.members?.length} color="bg-primary-500/20 text-primary-400" />
                 <StatCard icon="✅" label="Open Tasks" value={stats?.tasksByStatus?.open} color="bg-amber-500/20 text-amber-400" />
                 <StatCard icon="⏳" label="Submitted" value={stats?.tasksByStatus?.submitted} color="bg-blue-500/20 text-blue-400" />

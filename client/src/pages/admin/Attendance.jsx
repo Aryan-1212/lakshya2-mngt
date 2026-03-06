@@ -174,23 +174,24 @@ export default function AdminAttendance() {
 
             {view === 'history' && (
                 <div className="space-y-4">
-                    <div className="flex gap-3 flex-wrap items-end">
-                        <div>
+                    <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end">
+                        <div className="w-full sm:w-auto">
                             <label className="label">Team</label>
-                            <select className="input w-44" value={histRange.team} onChange={e => setHistRange(r => ({ ...r, team: e.target.value }))}>
+                            <select className="input w-full sm:w-44" value={histRange.team} onChange={e => setHistRange(r => ({ ...r, team: e.target.value }))}>
                                 <option value="">All Teams</option>
                                 {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
                             </select>
                         </div>
-                        <div>
+                        <div className="w-full sm:w-auto">
                             <label className="label">From</label>
-                            <input type="date" className="input w-40" value={histRange.start} onChange={e => setHistRange(r => ({ ...r, start: e.target.value }))} />
+                            <input type="date" className="input w-full sm:w-40" value={histRange.start} onChange={e => setHistRange(r => ({ ...r, start: e.target.value }))} />
                         </div>
-                        <div>
+                        <div className="w-full sm:w-auto">
                             <label className="label">To</label>
-                            <input type="date" className="input w-40" max={today()} value={histRange.end} onChange={e => setHistRange(r => ({ ...r, end: e.target.value }))} />
+                            <input type="date" className="input w-full sm:w-40" max={today()} value={histRange.end} onChange={e => setHistRange(r => ({ ...r, end: e.target.value }))} />
                         </div>
                     </div>
+
                     <div className="space-y-3">
                         {history.map(rec => (
                             <div key={rec._id} className="card">
@@ -234,7 +235,7 @@ export default function AdminAttendance() {
                             </div>
                         </div>
                     ))}
-                    {stats.length === 0 && <div className="col-span-3 card text-center text-gray-500 py-10">No attendance data yet</div>}
+                    {stats.length === 0 && <div className="col-span-full card text-center text-gray-500 py-10">No attendance data yet</div>}
                 </div>
             )}
         </div>

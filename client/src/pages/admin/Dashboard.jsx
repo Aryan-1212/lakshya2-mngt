@@ -33,7 +33,8 @@ export default function AdminDashboard() {
             </div>
 
             {/* Stats row */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
                 <StatCard icon="👥" label="Total Users" value={stats?.totalUsers} color="bg-primary-500/20 text-primary-400" />
                 <StatCard icon="🏷️" label="Teams" value={stats?.totalTeams} color="bg-pink-500/20 text-pink-400" />
                 <StatCard icon="✅" label="Total Tasks" value={stats?.totalTasks} color="bg-amber-500/20 text-amber-400" />

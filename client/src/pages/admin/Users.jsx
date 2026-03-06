@@ -55,9 +55,10 @@ function UserForm({ initial, onSubmit, loading }) {
 
     return (
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label className="label">Name</label>
+
                     <input className="input" value={form.name} onChange={f('name')} required minLength={2} />
                     {nameHasNumbers && <p className="text-xs text-red-400 mt-1">Name must not contain numbers</p>}
                 </div>
@@ -75,9 +76,10 @@ function UserForm({ initial, onSubmit, loading }) {
                 <input type="tel" className="input" value={form.phone || ''} onChange={f('phone')} placeholder="10-digit number" maxLength={10} />
                 {phoneInvalid && <p className="text-xs text-red-400 mt-1">Phone must be exactly 10 digits</p>}
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label className="label">Role</label>
+
                     <select className="input" value={form.role} onChange={f('role')}>
                         {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                     </select>
@@ -134,9 +136,9 @@ export default function AdminUsers() {
 
     return (
         <div className="space-y-5 animate-fade-in">
-            <div className="flex items-center justify-between">
-                <h1 className="page-title mb-0">👥 Users ({total})</h1>
-                <button onClick={() => setModal({ type: 'create' })} className="btn-primary">➕ Add User</button>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h1 className="page-title mb-0 text-xl sm:text-2xl">👥 Users ({total})</h1>
+                <button onClick={() => setModal({ type: 'create' })} className="btn-primary w-full sm:w-auto justify-center">➕ Add User</button>
             </div>
 
             {/* Role Tabs */}
@@ -149,88 +151,150 @@ export default function AdminUsers() {
                 ))}
             </div>
 
-            <div className="flex gap-3">
-                <input className="input max-w-xs" placeholder="Search by name or email..." value={filters.search} onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))} />
+            <div className="flex flex-col sm:flex-row gap-3">
+                <input className="input max-w-full sm:max-w-xs" placeholder="Search by name or email..." value={filters.search} onChange={(e) => setFilters(f => ({ ...f, search: e.target.value }))} />
             </div>
 
             {isLoading ? <div className="flex items-center justify-center h-40"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary-500" /></div> : (
-                <div className="table-wrapper">
-                    <table className="table">
-                        <thead>
-                            <tr>
-                                <th className="whitespace-nowrap">Name</th>
-                                <th className="whitespace-nowrap">Email</th>
-                                <th className="whitespace-nowrap">Phone</th>
-                                <th className="whitespace-nowrap">Role</th>
-                                <th className="whitespace-nowrap">Team(s)</th>
-                                <th className="whitespace-nowrap">Status</th>
-                                <th className="whitespace-nowrap text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {users.map((u) => (
-                                <tr key={u._id}>
-                                    <td className="whitespace-nowrap font-medium text-white">{u.name}</td>
-                                    <td className="max-w-[180px] break-all text-gray-400">{u.email}</td>
-                                    <td className="whitespace-nowrap text-gray-400 font-mono text-xs">{u.phone || '—'}</td>
-                                    <td className="whitespace-nowrap">
-                                        <span className={`${ROLE_BADGE[u.role] || 'badge-gray'} text-[10px]`}>
-                                            {ROLE_LABELS[u.role] || u.role}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                            {u.teamId?.name && (
-                                                <span className="badge-gray text-[10px] py-0 px-1.5 border border-dark-400">
-                                                    {u.teamId.name}
-                                                </span>
-                                            )}
-                                            {u.role === 'teamleader' && u.managedTeams?.map(t => (
-                                                t._id !== u.teamId?._id && (
-                                                    <span key={t._id} className="badge bg-dark-600 text-gray-400 text-[10px] py-0 px-1.5 border border-dark-500">
-                                                        {t.name}
-                                                    </span>
-                                                )
-                                            ))}
-                                            {!u.teamId?.name && (!u.managedTeams || u.managedTeams.length === 0) && <span className="text-gray-500">—</span>}
-                                        </div>
-                                    </td>
-                                    <td className="whitespace-nowrap">
-                                        <span className={u.isActive ? 'badge-success text-[10px]' : 'badge-danger text-[10px]'}>
-                                            {u.isActive ? 'Active' : 'Inactive'}
-                                        </span>
-                                    </td>
-                                    <td className="whitespace-nowrap">
-                                        <div className="flex items-center justify-center gap-1.5">
-                                            <button 
-                                                onClick={() => setModal({ type: 'edit', user: u })} 
-                                                className="w-8 h-8 flex items-center justify-center rounded-lg bg-dark-600 border border-dark-400 text-gray-400 hover:text-white hover:border-primary-500/50 transition-all"
-                                                title="Edit User"
-                                            >
-                                                ✏️
-                                            </button>
-                                            <button 
-                                                onClick={() => { if (window.confirm(`Deactivate ${u.name}?`)) deactivateMut.mutate(u._id) }} 
-                                                className="w-8 h-8 flex items-center justify-center rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 transition-all"
-                                                title="Deactivate"
-                                            >
-                                                ⏸️
-                                            </button>
-                                            <button 
-                                                onClick={() => { if (window.confirm(`⚠️ PERMANENTLY DELETE ${u.name}?`)) hardDeleteMut.mutate(u._id) }} 
-                                                className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 border border-red-500/20 text-red-500/70 hover:text-red-400 hover:bg-red-500/20 transition-all"
-                                                title="Delete Permanently"
-                                            >
-                                                🗑️
-                                            </button>
-                                        </div>
-                                    </td>
+                <>
+                    {/* Desktop Table View */}
+                    <div className="table-wrapper hidden md:block">
+                        <table className="table">
+                            <thead>
+                                <tr>
+                                    <th className="whitespace-nowrap">Name</th>
+                                    <th className="whitespace-nowrap">Email</th>
+                                    <th className="whitespace-nowrap">Phone</th>
+                                    <th className="whitespace-nowrap">Role</th>
+                                    <th className="whitespace-nowrap">Team(s)</th>
+                                    <th className="whitespace-nowrap">Status</th>
+                                    <th className="whitespace-nowrap text-center">Actions</th>
                                 </tr>
-                            ))}
-                            {users.length === 0 && <tr><td colSpan={6} className="text-center text-gray-500 py-8">No users found</td></tr>}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {users.map((u) => (
+                                    <tr key={u._id}>
+                                        <td className="whitespace-nowrap font-medium text-white">{u.name}</td>
+                                        <td className="max-w-[180px] break-all text-gray-400">{u.email}</td>
+                                        <td className="whitespace-nowrap text-gray-400 font-mono text-xs">{u.phone || '—'}</td>
+                                        <td className="whitespace-nowrap">
+                                            <span className={`${ROLE_BADGE[u.role] || 'badge-gray'} text-[10px]`}>
+                                                {ROLE_LABELS[u.role] || u.role}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                                {u.teamId?.name && (
+                                                    <span className="badge-gray text-[10px] py-0 px-1.5 border border-dark-400">
+                                                        {u.teamId.name}
+                                                    </span>
+                                                )}
+                                                {u.role === 'teamleader' && u.managedTeams?.map(t => (
+                                                    t._id !== u.teamId?._id && (
+                                                        <span key={t._id} className="badge bg-dark-600 text-gray-400 text-[10px] py-0 px-1.5 border border-dark-500">
+                                                            {t.name}
+                                                        </span>
+                                                    )
+                                                ))}
+                                                {!u.teamId?.name && (!u.managedTeams || u.managedTeams.length === 0) && <span className="text-gray-500">—</span>}
+                                            </div>
+                                        </td>
+                                        <td className="whitespace-nowrap">
+                                            <span className={u.isActive ? 'badge-success text-[10px]' : 'badge-danger text-[10px]'}>
+                                                {u.isActive ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </td>
+                                        <td className="whitespace-nowrap">
+                                            <div className="flex items-center justify-center gap-1.5">
+                                                <button 
+                                                    onClick={() => setModal({ type: 'edit', user: u })} 
+                                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-dark-600 border border-dark-400 text-gray-400 hover:text-white hover:border-primary-500/50 transition-all"
+                                                    title="Edit User"
+                                                >
+                                                    ✏️
+                                                </button>
+                                                <button 
+                                                    onClick={() => { if (window.confirm(`Deactivate ${u.name}?`)) deactivateMut.mutate(u._id) }} 
+                                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 transition-all"
+                                                    title="Deactivate"
+                                                >
+                                                    ⏸️
+                                                </button>
+                                                <button 
+                                                    onClick={() => { if (window.confirm(`⚠️ PERMANENTLY DELETE ${u.name}?`)) hardDeleteMut.mutate(u._id) }} 
+                                                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/10 border border-red-500/20 text-red-500/70 hover:text-red-400 hover:bg-red-500/20 transition-all"
+                                                    title="Delete Permanently"
+                                                >
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                                {users.length === 0 && <tr><td colSpan={7} className="text-center text-gray-500 py-8">No users found</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
+                        {users.map((u) => (
+                            <div key={u._id} className="card flex flex-col gap-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-bold text-white text-base">{u.name}</h3>
+                                        <p className="text-xs text-gray-400 break-all">{u.email}</p>
+                                        {u.phone && <p className="text-xs text-gray-400 font-mono mt-0.5">📞 {u.phone}</p>}
+                                    </div>
+                                    <span className={u.isActive ? 'badge-success text-[10px]' : 'badge-danger text-[10px]'}>
+                                        {u.isActive ? 'Active' : 'Inactive'}
+                                    </span>
+                                </div>
+                                <div className="flex flex-wrap gap-2 text-xs">
+                                    <span className={`${ROLE_BADGE[u.role] || 'badge-gray'} text-[10px]`}>
+                                        {ROLE_LABELS[u.role] || u.role}
+                                    </span>
+                                    {u.teamId?.name && (
+                                        <span className="badge-gray text-[10px] py-0 px-1.5 border border-dark-400">
+                                            {u.teamId.name}
+                                        </span>
+                                    )}
+                                    {u.role === 'teamleader' && u.managedTeams?.map(t => (
+                                        t._id !== u.teamId?._id && (
+                                            <span key={t._id} className="badge bg-dark-600 text-gray-400 text-[10px] py-0 px-1.5 border border-dark-500">
+                                                {t.name}
+                                            </span>
+                                        )
+                                    ))}
+                                </div>
+                                <div className="flex gap-2 pt-3 border-t border-dark-500 mt-auto justify-end">
+                                    <button 
+                                        onClick={() => setModal({ type: 'edit', user: u })} 
+                                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-dark-600 border border-dark-400 text-gray-400 hover:text-white hover:border-primary-500/50 transition-all"
+                                        title="Edit User"
+                                    >
+                                        ✏️
+                                    </button>
+                                    <button 
+                                        onClick={() => { if (window.confirm(`Deactivate ${u.name}?`)) deactivateMut.mutate(u._id) }} 
+                                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-500/70 hover:text-yellow-400 hover:bg-yellow-500/20 transition-all"
+                                        title="Deactivate"
+                                    >
+                                        ⏸️
+                                    </button>
+                                    <button 
+                                        onClick={() => { if (window.confirm(`⚠️ PERMANENTLY DELETE ${u.name}?`)) hardDeleteMut.mutate(u._id) }} 
+                                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-red-500/10 border border-red-500/20 text-red-500/70 hover:text-red-400 hover:bg-red-500/20 transition-all"
+                                        title="Delete Permanently"
+                                    >
+                                        🗑️
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                        {users.length === 0 && <div className="col-span-1 sm:col-span-2 text-center text-gray-500 py-8 card">No users found</div>}
+                    </div>
+                </>
             )}
 
             {/* Pagination */}
