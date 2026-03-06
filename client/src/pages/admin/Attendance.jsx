@@ -223,7 +223,7 @@ export default function AdminAttendance() {
                     {stats.map(s => (
                         <div key={s._id} className="card">
                             <h3 className="font-bold text-white mb-3">{s.teamName}</h3>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                                 <div className="bg-dark-700 rounded-lg p-3 text-center">
                                     <p className="text-2xl font-bold text-primary-400">{s.totalDays}</p>
                                     <p className="text-gray-500 text-xs mt-1">Days Marked</p>

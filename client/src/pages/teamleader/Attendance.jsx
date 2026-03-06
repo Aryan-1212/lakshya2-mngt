@@ -185,11 +185,11 @@ export default function TLAttendance() {
                     <div className="flex gap-3 flex-wrap items-center">
                         <div>
                             <label className="label">From</label>
-                            <input type="date" className="input w-40" value={historyRange.start} onChange={e => setHistoryRange(r => ({ ...r, start: e.target.value }))} />
+                            <input type="date" className="input w-full sm:w-40" value={historyRange.start} onChange={e => setHistoryRange(r => ({ ...r, start: e.target.value }))} />
                         </div>
                         <div>
                             <label className="label">To</label>
-                            <input type="date" className="input w-40" value={historyRange.end} max={today()} onChange={e => setHistoryRange(r => ({ ...r, end: e.target.value }))} />
+                            <input type="date" className="input w-full sm:w-40" value={historyRange.end} max={today()} onChange={e => setHistoryRange(r => ({ ...r, end: e.target.value }))} />
                         </div>
                     </div>
 

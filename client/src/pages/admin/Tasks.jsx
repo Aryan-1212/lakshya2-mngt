@@ -106,8 +106,8 @@ function SubmissionsList({ taskId, basePoints }) {
         <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
             {submissions.map(sub => (
                 <div key={sub._id} className="p-3 bg-dark-700 rounded-lg border border-dark-500">
-                    <div className="flex justify-between items-start mb-2">
-                        <div>
+                    <div className="flex justify-between items-start mb-2 gap-2 flex-wrap">
+                        <div className="min-w-0">
                             <p className="text-white text-sm font-medium">{sub.submittedBy?.name} <span className="text-xs text-gray-400 ml-1">({sub.submittedBy?.role})</span></p>
                             <p className="text-xs text-gray-400">{new Date(sub.createdAt).toLocaleString()}</p>
                         </div>
@@ -119,7 +119,7 @@ function SubmissionsList({ taskId, basePoints }) {
                     <div className="flex gap-2">
                         {sub.proofType === 'link' && <a href={sub.proofValue} target="_blank" rel="noreferrer" className="btn-secondary py-1 px-2 text-xs">🔗 Link</a>}
                         {sub.proofType === 'file' && <a href={sub.proofValue} target="_blank" rel="noreferrer" className="btn-secondary py-1 px-2 text-xs">📄 File</a>}
-                        {sub.proofType === 'text' && <div className="text-xs text-gray-300 bg-dark-800 p-2 rounded w-full border border-dark-600 font-mono">{sub.proofValue}</div>}
+                        {sub.proofType === 'text' && <div className="text-xs text-gray-300 bg-dark-800 p-2 rounded w-full border border-dark-600 font-mono break-words overflow-hidden">{sub.proofValue}</div>}
                     </div>
                     {sub.rejectionReason && <p className="text-xs text-red-400 mt-2 bg-red-900/20 p-2 rounded border border-red-500/20"><strong>Reason:</strong> {sub.rejectionReason}</p>}
 

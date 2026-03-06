@@ -39,7 +39,7 @@ function AnnForm({ initial, onSubmit, loading, userRole }) {
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
             <div><label className="label">Title *</label><input className="input" value={form.title} onChange={f('title')} required /></div>
             <div><label className="label">Body (Markdown supported)</label><textarea className="input font-mono text-sm" rows={5} value={form.body} onChange={f('body')} required /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><label className="label">Scope</label>
                     {isTeamLeader ? (
                         <div className="input bg-dark-700 text-gray-400 cursor-not-allowed">🏷️ Team Only (auto)</div>
@@ -68,7 +68,7 @@ function AnnForm({ initial, onSubmit, loading, userRole }) {
                     </div>
                 </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><label className="label">Expires At</label><input type="datetime-local" className="input" value={form.expiresAt || ''} onChange={f('expiresAt')} /></div>
                 <div className="flex items-end pb-1"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.pinned} onChange={(e) => setForm((s) => ({ ...s, pinned: e.target.checked }))} /><span className="text-sm text-gray-300">📌 Pin announcement</span></label></div>
             </div>
@@ -112,10 +112,10 @@ export default function AdminAnnouncements() {
 
     return (
         <div className="space-y-5 animate-fade-in">
-            <div className="flex items-center justify-between">
-                <h1 className="page-title mb-0">📢 Announcements ({total})</h1>
+            <div className="flex items-center justify-between flex-wrap gap-3">
+                <h1 className="page-title mb-0 min-w-0">📢 Announcements ({total})</h1>
                 {(user?.role === 'admin' || user?.role === 'teamleader') && (
-                    <button onClick={() => setModal('create')} className="btn-primary">➕ New Announcement</button>
+                    <button onClick={() => setModal('create')} className="btn-primary w-full sm:w-auto justify-center">➕ New Announcement</button>
                 )}
             </div>
 
@@ -127,12 +127,12 @@ export default function AdminAnnouncements() {
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                                         {ann.pinned && <span className="text-amber-400 text-sm">📌</span>}
-                                        <h3 className="font-bold text-white">{ann.title}</h3>
+                                        <h3 className="font-bold text-white break-words min-w-0">{ann.title}</h3>
                                         <span className={`badge ${SCOPE_BADGE[ann.scope]}`}>{ann.scope}</span>
                                         {ann.teamId && <span className="badge-gray">{ann.teamId.name}</span>}
                                         {ann.sendEmail && <span className="badge bg-blue-500/20 text-blue-400 text-xs">📧 Emailed</span>}
                                     </div>
-                                    <div className="text-sm text-gray-400 prose prose-invert max-w-none line-clamp-2">
+                                    <div className="text-sm text-gray-400 prose prose-invert max-w-none line-clamp-2 break-words">
                                         <ReactMarkdown>{ann.body}</ReactMarkdown>
                                     </div>
                                     <p className="text-xs text-gray-500 mt-2">by {ann.createdBy?.name} · {new Date(ann.createdAt).toLocaleString()}</p>

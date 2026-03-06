@@ -27,7 +27,7 @@ export default function VolLayout() {
     return (
         <div className="flex min-h-screen">
             <Sidebar links={links} title={isCA ? 'CA Portal' : 'Member Portal'} />
-            <main className="flex-1 ml-0 lg:ml-[var(--sidebar-width)] p-4 lg:p-6 pt-16 lg:pt-6 min-h-screen">
+            <main className="flex-1 min-w-0 ml-0 lg:ml-[var(--sidebar-width)] p-4 lg:p-6 pt-16 lg:pt-6 min-h-screen">
                 <Outlet />
             </main>
         </div>

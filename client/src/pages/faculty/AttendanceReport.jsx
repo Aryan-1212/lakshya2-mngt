@@ -76,7 +76,7 @@ export default function FacultyAttendanceReport() {
                     {view === 'table' && (
                         <div>
                             <label className="label">Team</label>
-                            <select className="input w-44" value={filters.teamId} onChange={e => setFilters(f => ({ ...f, teamId: e.target.value }))}>
+                            <select className="input w-full sm:w-44" value={filters.teamId} onChange={e => setFilters(f => ({ ...f, teamId: e.target.value }))}>
                                 <option value="">All Teams</option>
                                 {teams.map(t => <option key={t._id} value={t._id}>{t.name}</option>)}
                             </select>
@@ -85,7 +85,7 @@ export default function FacultyAttendanceReport() {
                     {view === 'student' && (
                         <div>
                             <label className="label">Student</label>
-                            <select className="input w-56" value={studentView.userId}
+                            <select className="input w-full sm:w-56" value={studentView.userId}
                                 onChange={e => {
                                     const u = users.find(u => u._id === e.target.value)
                                     setStudentView({ userId: e.target.value, name: u?.name || '' })
@@ -99,11 +99,11 @@ export default function FacultyAttendanceReport() {
                     )}
                     <div>
                         <label className="label">From</label>
-                        <input type="date" className="input w-40" value={filters.startDate} onChange={e => setFilters(f => ({ ...f, startDate: e.target.value }))} />
+                        <input type="date" className="input w-full sm:w-40" value={filters.startDate} onChange={e => setFilters(f => ({ ...f, startDate: e.target.value }))} />
                     </div>
                     <div>
                         <label className="label">To</label>
-                        <input type="date" className="input w-40" max={today()} value={filters.endDate} onChange={e => setFilters(f => ({ ...f, endDate: e.target.value }))} />
+                        <input type="date" className="input w-full sm:w-40" max={today()} value={filters.endDate} onChange={e => setFilters(f => ({ ...f, endDate: e.target.value }))} />
                     </div>
                 </div>
             </div>
