@@ -24,10 +24,10 @@ function TaskForm({ initial, teamId: forcedTeamId, onSubmit, loading }) {
 
     const { data: usersData } = useQuery({
         queryKey: ['users-for-assign', selectedTeam],
-        queryFn: () => getUsers({ teamId: selectedTeam, role: 'volunteer', limit: 50 }),
+        queryFn: () => getUsers({ teamId: selectedTeam, limit: 50 }),
         enabled: !!selectedTeam,
     })
-    const volunteers = usersData?.data?.users || []
+    const volunteers = (usersData?.data?.users || []).filter(u => u.role !== 'teamleader')
 
     const f = (k) => (v) => setForm((s) => ({ ...s, [k]: typeof v === 'object' ? v.target.value : v }))
     const toggleAssignee = (id) => setForm((s) => ({

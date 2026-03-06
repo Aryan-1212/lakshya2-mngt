@@ -158,7 +158,7 @@ function ResourceForm({ onSubmit, loading }) {
                 {form.scope === 'role' && (
                     <div><label className="label">Target Roles</label>
                         <select multiple className="input h-20" value={form.targetRoles} onChange={(e) => setForm(s => ({ ...s, targetRoles: Array.from(e.target.selectedOptions, o => o.value) }))}>
-                            <option value="volunteer">Member</option>
+                            <option value="member">Member</option>
                             <option value="campus_ambassador">Campus Ambassador</option>
                             <option value="teamleader">Team Leader</option>
                             <option value="faculty">Faculty</option>
