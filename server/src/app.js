@@ -25,6 +25,7 @@ const attendanceRoutes = require('./routes/attendance');
 const adminUsersRoutes = require('./routes/adminUsers');
 const caRoutes = require('./routes/ca');
 const referralRoutes = require('./routes/referrals');
+const emailRoutes = require('./routes/emails');
 
 const app = express();
 
@@ -80,6 +81,7 @@ app.use('/api/referrals', referralRoutes);
 app.use('/api/contacts', contactRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
+app.use('/api/emails', emailRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => res.status(200).send("OK"));

@@ -11,6 +11,7 @@ const ADMIN_LINKS = [
     { to: '/admin/attendance', label: 'Attendance', icon: '📋' },
     { to: '/admin/leaderboard', label: 'Leaderboard', icon: '🏆' },
     { to: '/admin/resources', label: 'Resources', icon: '📁' },
+    { to: '/admin/bulk-email', label: 'Bulk Email', icon: '📧' },
     { to: '/admin/import-members', label: 'Import Members', icon: '📥' },
     { to: '/admin/todos', label: 'My Todos', icon: '📝' },
     { to: '/admin/profile', label: 'Profile Settings', icon: '👤' },

@@ -21,6 +21,7 @@ import AdminTasks from './pages/admin/Tasks'
 import AdminAnnouncements from './pages/admin/Announcements'
 import AdminResources from './pages/admin/Resources'
 import AdminEvents from './pages/admin/Events'
+import AdminBulkEmail from './pages/admin/BulkEmail'
 
 // Team Leader pages
 import TLDashboard from './pages/teamleader/Dashboard'
@@ -90,6 +91,7 @@ export default function App() {
                 <Route path="announcements" element={<AdminAnnouncements />} />
                 <Route path="resources" element={<AdminResources />} />
                 <Route path="events" element={<AdminEvents />} />
+                <Route path="bulk-email" element={<AdminBulkEmail />} />
                 <Route path="leaderboard" element={<Leaderboard />} />
                 <Route path="attendance" element={<AdminAttendance />} />
                 <Route path="todos" element={<Todos />} />

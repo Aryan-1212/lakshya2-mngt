@@ -1,4 +1,5 @@
 import api from './axios'
+export { api }
 
 // Auth for the authentication of the user
 export const login = (data) => api.post('/auth/login', data)
@@ -120,4 +121,5 @@ export const getTeamMembers = (teamId) => api.get(`/attendance/members/${teamId}
 export const markAttendance = (data) => api.post('/attendance', data)
 export const updateAttendance = (id, data) => api.patch(`/attendance/${id}`, data)
 export const deleteAttendance = (id) => api.delete(`/attendance/${id}`)
+export const sendBulkEmail = (data) => api.post('/emails/send-bulk', data)
 
