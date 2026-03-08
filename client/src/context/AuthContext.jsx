@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import api from '../api/axios'
 
 const AuthContext = createContext(null)
@@ -6,6 +7,7 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
+    const qc = useQueryClient()
 
     const fetchMe = useCallback(async () => {
         try {
@@ -25,6 +27,7 @@ export function AuthProvider({ children }) {
     const login = async (email, password) => {
         const { data } = await api.post('/auth/login', { email, password })
         localStorage.setItem('accessToken', data.accessToken)
+        qc.clear()
         setUser(data.user)
         return data.user
     }
@@ -32,12 +35,14 @@ export function AuthProvider({ children }) {
     const logout = async () => {
         try { await api.post('/auth/logout') } catch { }
         localStorage.removeItem('accessToken')
+        qc.clear()
         setUser(null)
     }
 
     const switchTeam = async (teamId) => {
         const { data } = await api.post('/auth/switch-team', { teamId })
         localStorage.setItem('accessToken', data.accessToken)
+        qc.clear()
         setUser(data.user)
         return data.user
     }

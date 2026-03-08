@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useAuth } from '../../context/AuthContext'
 import { getResources, createResource, uploadResource, deleteResource, getTeams } from '../../api'
 import toast from 'react-hot-toast'
 
@@ -133,8 +134,8 @@ function ResourceForm({ onSubmit, loading }) {
                         className="w-5 h-5 rounded accent-pink-500"
                     />
                     <div>
-                        <span className="text-sm font-medium text-white">🎓 Campus Ambassador Resource</span>
-                        <p className="text-xs text-gray-400 mt-0.5">Tag this as a CA-specific resource</p>
+                        <span className="text-sm font-medium text-white">Can CA view?</span>
+                        <p className="text-xs text-gray-400 mt-0.5">If checked, Campus Ambassadors will be able to see this resource</p>
                     </div>
                 </label>
             </div>
@@ -179,16 +180,18 @@ export default function AdminResources() {
     const [page, setPage] = useState(1)
     const [accessModal, setAccessModal] = useState(null) // resource needing code
 
+    const { user } = useAuth()
     const { data: teamData } = useQuery({ queryKey: ['teams'], queryFn: getTeams })
     const teams = teamData?.data?.teams || []
 
     const { data, isLoading } = useQuery({
-        queryKey: ['resources', filters, page],
+        queryKey: ['resources', user?._id, filters, page],
         queryFn: () => getResources({
             ...filters,
             isCAResource: filters.isCAResource ? 'true' : undefined,
             page, limit: 12
         }),
+        enabled: !!user?._id
     })
     const resources = data?.data?.resources || []
     const total = data?.data?.total || 0

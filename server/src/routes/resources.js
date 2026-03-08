@@ -384,14 +384,25 @@ router.use(verifyToken);
 const buildResourceFilter = (user) => {
   const { role, teamId } = user;
   if (role === 'admin' || role === 'faculty') return {};
-
-  return {
+  const audienceFilter = {
     $or: [
       { scope: 'global' },
       { scope: 'team', teamId },
       { scope: 'role', targetRoles: role },
     ],
   };
+
+  // If CA, they can ONLY see resources specifically marked as CA-viewable
+  if (role === 'campus_ambassador') {
+    return {
+      $and: [
+        audienceFilter,
+        { isCAResource: true }
+      ]
+    };
+  }
+
+  return audienceFilter;
 };
 
 // GET /api/resources
