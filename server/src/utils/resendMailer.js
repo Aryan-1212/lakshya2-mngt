@@ -17,91 +17,73 @@ const getClient = () => {
 /**
  * Send an email using Resend.
  * @param {Object} opts
- * @param {string|string[]} opts.to - Recipient(s) for the 'To' field
- * @param {string|string[]} [opts.bcc] - Recipient(s) for the 'Bcc' field (privacy)
+ * @param {string|string[]} opts.to - Recipient(s)
  * @param {string} opts.subject - Email subject
  * @param {string} opts.html - HTML content
- * @param {string} [opts.text] - Plain text fallback
- * @returns {Promise<Object|null>}
+ * @returns {Promise<{data: any, error: any}>}
  */
-const sendEmail = async ({ to, bcc, subject, html, text }) => {
+const sendEmail = async ({ to, subject, html }) => {
   const client = getClient();
-  if (!client) return null;
+  if (!client) return { data: null, error: { message: 'Resend client not initialized' } };
 
-  const from = process.env.EMAIL_FROM;
-  if (!from) {
-    logger.warn('EMAIL_FROM not set — email not sent.');
-    return null;
-  }
-
-  // Auto-generate plain text fallback by stripping HTML tags if not provided
-  const textFallback = text || html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  const from = 'noreply@mail.lakshya-mngt.online';
+  const textFallback = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
   try {
-    const payload = {
+    const response = await client.emails.send({
       from,
       to: Array.isArray(to) ? to : [to],
       subject,
       html,
       text: textFallback,
-    };
-
-    if (bcc) {
-      payload.bcc = Array.isArray(bcc) ? bcc : [bcc];
-    }
-
-    const { data, error } = await client.emails.send(payload);
-
-    if (error) {
-      logger.error(`Resend error: ${JSON.stringify(error)}`);
-      return null;
-    }
-
-    const recipientsCount = (payload.to?.length || 0) + (payload.bcc?.length || 0);
-    logger.info(`Email sent [${data.id}] to ${recipientsCount} recipients`);
-    return data;
+    });
+    return response;
   } catch (err) {
-    logger.error(`sendEmail threw: ${err.message}`);
-    return null;
+    return { data: null, error: { message: err.message } };
   }
 };
 
 /**
- * Send emails to a large list in batches using BCC for privacy.
- * @param {string[]} emails
+ * Send emails to multiple recipients individually with full logging and summary.
+ * @param {string[]} emailList
  * @param {string} subject
  * @param {string} html
- * @param {number} [batchSize=50] - Resend allows up to 50 recipients in a single call (total of to+cc+bcc)
+ * @returns {Promise<Object>} Summary of the operation
  */
-const sendBatchEmails = async (emails, subject, html, batchSize = 49) => {
-  if (!emails.length) return;
-  
-  const from = process.env.EMAIL_FROM;
-  if (!from) {
-    logger.warn('EMAIL_FROM not set — batch email aborted.');
-    return;
+const sendBatchEmails = async (emailList, subject, html) => {
+  const summary = {
+    successCount: 0,
+    failureCount: 0,
+    failures: []
+  };
+
+  if (!emailList || !emailList.length) {
+    logger.warn('sendBatchEmails called with empty list');
+    return summary;
   }
 
-  let sent = 0;
-  for (let i = 0; i < emails.length; i += batchSize) {
-    const batch = emails.slice(i, i + batchSize);
-    
-    // Use the sender email as 'to' and the batch as 'bcc' for privacy
-    const result = await sendEmail({ 
-      to: from, 
-      bcc: batch, 
-      subject, 
-      html 
-    });
-    
-    if (result) sent += batch.length;
-    
-    // Small delay between batches to stay within rate limits (Resend is generous but good practice)
-    if (i + batchSize < emails.length) {
-      await new Promise((r) => setTimeout(r, 200));
+  logger.info(`Starting batch send to ${emailList.length} recipients...`);
+
+  // Use for...of loop with await as requested for maximum reliability/debugging per email
+  for (const email of emailList) {
+    const { data, error } = await sendEmail({ to: email, subject, html });
+
+    if (error) {
+      summary.failureCount++;
+      summary.failures.push({ email, error: error.message });
+      logger.error(`[FAIL] Recipient: ${email} | Error: ${error.message}${error.statusCode ? ` | Status: ${error.statusCode}` : ''}`);
+    } else {
+      summary.successCount++;
+      logger.info(`[SUCCESS] Recipient: ${email} | ID: ${data.id} | Status: 200`);
     }
+
+    // Rate limiting safeguard: 10 emails per second (Resend free tier is 2 requests/sec, Pro is higher)
+    // Adjust as needed based on project scale
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
-  logger.info(`Batch email complete: ${sent}/${emails.length} delivered`);
+
+  logger.info(`Batch complete! Success: ${summary.successCount}, Failures: ${summary.failureCount}`);
+  return summary;
 };
 
 module.exports = { sendEmail, sendBatchEmails };

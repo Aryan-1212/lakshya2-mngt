@@ -96,16 +96,56 @@ router.post('/send-bulk', async (req, res, next) => {
     }
 
     // Send in background to avoid timeout
+    // Note: sendBatchEmails now returns a summary and logs internally
     sendBatchEmails(emailList, subject, html)
-      .then(() => logger.info(`Bulk email sequence finished for ${emailList.length} recipients`))
+      .then((summary) => {
+        logger.info(`Bulk email sequence finished. Success: ${summary.successCount}, Failures: ${summary.failureCount}`);
+      })
       .catch(err => logger.error(`Bulk email background task failed: ${err.message}`));
 
     res.json({ 
       success: true, 
-      message: `Mail sending initiated for ${emailList.length} recipients.`,
+      message: `Mail sending initiated for ${emailList.length} recipients. Check server logs for per-recipient status if needed.`,
       recipientCount: emailList.length 
     });
 
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/emails/test-batch
+ * Test endpoint to verify batch sending with a small list of emails.
+ */
+router.get('/test-batch', async (req, res, next) => {
+  try {
+    const testEmails = (req.query.emails || '').split(',').filter(e => e.includes('@'));
+    
+    if (testEmails.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Please provide comma-separated emails in the query param: ?emails=test1@example.com,test2@example.com' 
+      });
+    }
+
+    const subject = "🧪 Batch Mail Test - Techfest 2026";
+    const html = `
+      <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #6366f1;">Email System Audit</h2>
+        <p>This is a test to verify the reliability of individual sending, logging, and error handling.</p>
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        <p style="font-size: 12px; color: #666;">Generated at: ${new Date().toLocaleString()}</p>
+      </div>
+    `;
+
+    const summary = await sendBatchEmails(testEmails, subject, html);
+
+    res.json({
+      success: true,
+      message: 'Test batch completed',
+      results: summary
+    });
   } catch (err) {
     next(err);
   }
