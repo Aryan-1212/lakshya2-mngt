@@ -48,7 +48,7 @@ function UserForm({ initial, onSubmit, loading }) {
     const [form, setForm] = useState(initial || { name: '', email: '', password: '', role: 'member' })
     const f = (k) => (v) => setForm((s) => ({ ...s, [k]: typeof v === 'object' ? v.target.value : v }))
 
-    const isCAMismatch = form.role === 'campus_ambassador' && user?.teamId?.name?.toLowerCase() !== 'marketing'
+    const isCAMismatch = form.role === 'campus_ambassador' && !['marketing', 'online marketing'].includes(user?.teamId?.name?.toLowerCase())
 
     return (
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
@@ -71,7 +71,7 @@ function UserForm({ initial, onSubmit, loading }) {
             </div>
             {isCAMismatch && (
                 <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
-                    ⚠️ Campus Ambassadors can only be assigned to the <strong>Marketing</strong> team. Your team is "{user?.teamId?.name}". Please change the role.
+                    ⚠️ Campus Ambassadors can only be assigned to the <strong>Marketing</strong> or <strong>Online Marketing</strong> team. Your team is "{user?.teamId?.name}". Please change the role.
                 </div>
             )}
             {initial && (
@@ -93,7 +93,7 @@ export default function TeamMembers() {
     const [modal, setModal] = useState(null)
     const [search, setSearch] = useState('')
 
-    const isMarketingTeam = user?.teamId?.name === 'Marketing'
+    const isCAAllowedTeam = ['Marketing', 'Online Marketing'].includes(user?.teamId?.name)
 
     const { data, isLoading } = useQuery({
         queryKey: ['team-users', user?.teamId?._id],
@@ -134,7 +134,7 @@ export default function TeamMembers() {
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Role</th>
-                                {isMarketingTeam && <th>Referral Code</th>}
+                                {isCAAllowedTeam && <th>Referral Code</th>}
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -151,7 +151,7 @@ export default function TeamMembers() {
                                             {u.role === 'teamleader' ? 'Team Leader' : (ROLE_LABELS[u.role] || u.role)}
                                         </span>
                                     </td>
-                                    {isMarketingTeam && (
+                                    {isCAAllowedTeam && (
                                         <td className="text-gray-300">
                                             {u.role === 'campus_ambassador' ? (
                                                 <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export default function TeamMembers() {
                                     </td>
                                 </tr>
                             ))}
-                            {sortedUsers.length === 0 && <tr><td colSpan={isMarketingTeam ? 6 : 5} className="text-center text-gray-500 py-8">No members found</td></tr>}
+                            {sortedUsers.length === 0 && <tr><td colSpan={isCAAllowedTeam ? 6 : 5} className="text-center text-gray-500 py-8">No members found</td></tr>}
                         </tbody>
                     </table>
                 </div>

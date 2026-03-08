@@ -45,20 +45,43 @@ function Modal({ open, onClose, title, children }) {
 function UserForm({ initial, onSubmit, loading }) {
     const { data: teamsData } = useQuery({ queryKey: ['teams'], queryFn: getTeams })
     const teams = teamsData?.data?.teams || []
-    const [form, setForm] = useState(initial || { name: '', email: '', password: '', role: 'member', teamId: '', phone: '' })
+    const [form, setForm] = useState(initial || { name: '', email: '', password: '', role: 'member', teamId: '', secondaryTeamIds: [], phone: '' })
     const f = (k) => (v) => setForm((s) => ({ ...s, [k]: typeof v === 'object' ? v.target.value : v }))
 
     const nameHasNumbers = /\d/.test(form.name)
     const phoneInvalid = form.phone && !/^\d{10}$/.test(form.phone)
-    const selectedTeam = teams.find(t => t._id === form.teamId)
-    const isCAMismatch = form.role === 'campus_ambassador' && (!selectedTeam || selectedTeam.name.toLowerCase() !== 'marketing')
+    
+    const allSelectedTeamIds = [form.teamId, ...(form.secondaryTeamIds || [])].filter(Boolean)
+    const selectedTeams = teams.filter(t => allSelectedTeamIds.includes(t._id))
+    
+    // CA can only be in Marketing or Online Marketing (in any of their teams)
+    const isCAMismatch = form.role === 'campus_ambassador' && (
+        allSelectedTeamIds.length === 0 || 
+        selectedTeams.some(t => !['marketing', 'online marketing'].includes(t.name.toLowerCase()))
+    )
+
+    const addTeamSlot = () => setForm(s => ({ ...s, secondaryTeamIds: [...(s.secondaryTeamIds || []), ''] }))
+    const updateTeamSlot = (index, value) => {
+        if (index === 0) {
+            setForm(s => ({ ...s, teamId: value }))
+        } else {
+            const next = [...(form.secondaryTeamIds || [])]
+            if (value === '') {
+                next.splice(index - 1, 1)
+            } else {
+                next[index - 1] = value
+            }
+            setForm(s => ({ ...s, secondaryTeamIds: next }))
+        }
+    }
+
+    const teamSlots = [form.teamId, ...(form.secondaryTeamIds || [])]
 
     return (
-        <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
+        <form onSubmit={(e) => { e.preventDefault(); onSubmit({ ...form, secondaryTeamIds: (form.secondaryTeamIds || []).filter(Boolean) }) }} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label className="label">Name</label>
-
                     <input className="input" value={form.name} onChange={f('name')} required minLength={2} />
                     {nameHasNumbers && <p className="text-xs text-red-400 mt-1">Name must not contain numbers</p>}
                 </div>
@@ -76,25 +99,48 @@ function UserForm({ initial, onSubmit, loading }) {
                 <input type="tel" className="input" value={form.phone || ''} onChange={f('phone')} placeholder="10-digit number" maxLength={10} />
                 {phoneInvalid && <p className="text-xs text-red-400 mt-1">Phone must be exactly 10 digits</p>}
             </div>
+            
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
+                <div className="sm:col-span-2">
                     <label className="label">Role</label>
-
                     <select className="input" value={form.role} onChange={f('role')}>
                         {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                     </select>
                 </div>
-                <div>
-                    <label className="label">Team</label>
-                    <select className="input" value={form.teamId || ''} onChange={f('teamId')}>
-                        <option value="">No team</option>
-                        {teams.map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}
-                    </select>
-                </div>
+
+                {teamSlots.map((slotId, idx) => (
+                    <div key={idx}>
+                        <label className="label">Team {idx + 1} {idx === 0 ? '(Primary)' : ''}</label>
+                        <select 
+                            className="input" 
+                            value={slotId || ''} 
+                            onChange={(e) => updateTeamSlot(idx, e.target.value)}
+                            required={idx === 0}
+                        >
+                            <option value="">{idx === 0 ? 'No team' : '🗑️ Remove team slot'}</option>
+                            {teams.map((t) => (
+                                <option 
+                                    key={t._id} 
+                                    value={t._id} 
+                                    disabled={allSelectedTeamIds.includes(t._id) && slotId !== t._id}
+                                >
+                                    {t.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                ))}
             </div>
+
+            {teamSlots.length < teams.length && (
+                <button type="button" onClick={addTeamSlot} className="text-xs text-primary-400 hover:text-primary-300 font-medium flex items-center gap-1">
+                    ➕ Add another team
+                </button>
+            )}
+
             {isCAMismatch && (
                 <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400">
-                    ⚠️ Campus Ambassadors can only be assigned to the <strong>Marketing</strong> team. Please change the team or role.
+                    ⚠️ Campus Ambassadors can only be assigned to <strong>Marketing</strong> or <strong>Online Marketing</strong> teams. Please check all selected teams.
                 </div>
             )}
             {initial && (
@@ -189,14 +235,19 @@ export default function AdminUsers() {
                                                         {u.teamId.name}
                                                     </span>
                                                 )}
+                                                {u.secondaryTeamIds?.map(t => (
+                                                    <span key={t._id} className="badge bg-dark-600 text-primary-400 text-[10px] py-0 px-1.5 border border-primary-500/20">
+                                                        {t.name}
+                                                    </span>
+                                                ))}
                                                 {u.role === 'teamleader' && u.managedTeams?.map(t => (
-                                                    t._id !== u.teamId?._id && (
+                                                    t._id !== u.teamId?._id && !u.secondaryTeamIds?.some(st => st._id === t._id) && (
                                                         <span key={t._id} className="badge bg-dark-600 text-gray-400 text-[10px] py-0 px-1.5 border border-dark-500">
-                                                            {t.name}
+                                                            {t.name} (Lead)
                                                         </span>
                                                     )
                                                 ))}
-                                                {!u.teamId?.name && (!u.managedTeams || u.managedTeams.length === 0) && <span className="text-gray-500">—</span>}
+                                                {!u.teamId?.name && (!u.secondaryTeamIds || u.secondaryTeamIds.length === 0) && (!u.managedTeams || u.managedTeams.length === 0) && <span className="text-gray-500">—</span>}
                                             </div>
                                         </td>
                                         <td className="whitespace-nowrap">
@@ -259,10 +310,15 @@ export default function AdminUsers() {
                                             {u.teamId.name}
                                         </span>
                                     )}
+                                    {u.secondaryTeamIds?.map(t => (
+                                        <span key={t._id} className="badge bg-dark-600 text-primary-400 text-[10px] py-0 px-1.5 border border-primary-500/20">
+                                            {t.name}
+                                        </span>
+                                    ))}
                                     {u.role === 'teamleader' && u.managedTeams?.map(t => (
-                                        t._id !== u.teamId?._id && (
+                                        t._id !== u.teamId?._id && !u.secondaryTeamIds?.some(st => st._id === t._id) && (
                                             <span key={t._id} className="badge bg-dark-600 text-gray-400 text-[10px] py-0 px-1.5 border border-dark-500">
-                                                {t.name}
+                                                {t.name} (Lead)
                                             </span>
                                         )
                                     ))}
@@ -315,10 +371,10 @@ export default function AdminUsers() {
             <Modal open={modal?.type === 'edit'} onClose={() => setModal(null)} title="Edit User">
                 {modal?.user && (
                     <UserForm
-                        initial={{ ...modal.user, teamId: modal.user.teamId?._id || '' }}
+                        initial={{ ...modal.user, teamId: modal.user.teamId?._id || '', secondaryTeamIds: modal.user.secondaryTeamIds?.map(t => t._id || t) || [] }}
                         onSubmit={(data) => {
-                            const { name, role, teamId, isActive, phone } = data;
-                            updateMut.mutate({ id: modal.user._id, name, role, teamId, isActive, phone });
+                            const { name, role, teamId, secondaryTeamIds, isActive, phone } = data;
+                            updateMut.mutate({ id: modal.user._id, name, role, teamId, secondaryTeamIds, isActive, phone });
                         }}
                         loading={updateMut.isPending}
                     />

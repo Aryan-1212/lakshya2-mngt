@@ -25,6 +25,12 @@ const userSchema = new mongoose.Schema(
       ref: 'Team',
       default: null,
     },
+    secondaryTeamIds: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Team',
+      },
+    ],
     isActive: { type: Boolean, default: true },
     avatarUrl: { type: String, default: null },
     phone: { type: String, default: null },
@@ -58,6 +64,14 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// Virtual for all teams this user belongs to
+userSchema.virtual('allTeams', {
+  ref: 'Team',
+  localField: 'teamId',
+  foreignField: '_id',
+  justOne: false,
+});
+
 // Virtual for teams where this user is a lead
 userSchema.virtual('managedTeams', {
   ref: 'Team',
@@ -67,6 +81,7 @@ userSchema.virtual('managedTeams', {
 
 // Enhanced indexes for performance
 userSchema.index({ teamId: 1 });
+userSchema.index({ secondaryTeamIds: 1 });
 userSchema.index({ role: 1 });
 userSchema.index({ referredBy: 1 });
 userSchema.index({ isActive: 1 });
@@ -109,14 +124,14 @@ userSchema.methods.generateUniqueReferralCode = async function(maxAttempts = 10)
 
 // Pre-save middleware for referral code generation
 userSchema.pre('save', async function(next) {
-  // Generate referral code for Campus Ambassadors in Marketing team
+  // Generate referral code for Campus Ambassadors in Marketing or Online Marketing team
   try {
     const isCA = this.role === 'campus_ambassador';
     const teamChangedOrRoleChanged = this.isModified('teamId') || this.isModified('role');
 
     if (teamChangedOrRoleChanged && isCA && !this.referralCode && this.teamId) {
       const team = await Team.findById(this.teamId).select('name');
-      if (team && team.name === 'Marketing') {
+      if (team && (team.name === 'Marketing' || team.name === 'Online Marketing')) {
         this.referralCode = await this.generateUniqueReferralCode();
       }
     }

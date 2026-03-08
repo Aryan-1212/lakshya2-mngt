@@ -39,6 +39,7 @@ router.post('/login', authLimiter, validate(loginSchema), async (req, res, next)
     // Find user with team population
     const user = await User.findOne({ email })
       .populate('teamId', 'name color teamLeads')
+      .populate('secondaryTeamIds', 'name color')
       .populate('managedTeams', 'name color')
       .populate('referredBy', 'name email');
     
@@ -275,6 +276,7 @@ router.post('/refresh', async (req, res, next) => {
 
     const user = await User.findById(payload.id)
       .populate('teamId', 'name color teamLeads')
+      .populate('secondaryTeamIds', 'name color')
       .populate('managedTeams', 'name color')
       .populate('referredBy', 'name email');
       
@@ -321,6 +323,7 @@ router.get('/me', verifyToken, async (req, res, next) => {
   try {
     const user = await User.findById(req.user.id)
       .populate('teamId', 'name color teamLeads')
+      .populate('secondaryTeamIds', 'name color')
       .populate('managedTeams', 'name color')
       .populate('referredBy', 'name email')
       .select('-passwordHash -refreshTokenHash -emailVerificationToken');
@@ -411,28 +414,48 @@ router.post('/switch-team', verifyToken, async (req, res, next) => {
     const { teamId } = req.body;
     if (!teamId) return res.status(400).json({ success: false, message: 'Team ID is required' });
 
-    const Team = require('../models/Team');
-    // Verify user is a lead of the target team
-    const isLead = await Team.findOne({ _id: teamId, teamLeads: req.user.id });
-    if (!isLead) {
-      return res.status(403).json({ success: false, message: 'Access denied: You are not a leader of this team' });
-    }
-
-    const user = await User.findByIdAndUpdate(req.user.id, { teamId }, { new: true })
-      .populate('teamId', 'name color teamLeads')
-      .populate('referredBy', 'name email');
-
+    const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    // Generate new access token with updated teamId
-    const accessToken = generateAccessToken(user);
+    const Team = require('../models/Team');
+    // Verify user is a lead of the target team OR has it as a secondary team OR it is their current team
+    const isLead = await Team.findOne({ _id: teamId, teamLeads: req.user.id });
+    const isSecondary = user.secondaryTeamIds.some(id => id.toString() === teamId);
     
-    logger.info(`User ${user.email} switched active team to ${teamId}`);
+    if (!isLead && !isSecondary && user.teamId.toString() !== teamId) {
+      return res.status(403).json({ success: false, message: 'Access denied: You do not have access to this team' });
+    }
+
+    const oldTeamId = user.teamId;
+    if (oldTeamId.toString() !== teamId) {
+        // If switching to a secondary team, ensure the old one replaces it in the secondary pool
+        if (isSecondary) {
+            user.secondaryTeamIds = user.secondaryTeamIds.filter(id => id.toString() !== teamId);
+            if (!user.secondaryTeamIds.some(id => id.toString() === oldTeamId.toString())) {
+                user.secondaryTeamIds.push(oldTeamId);
+            }
+        }
+        user.teamId = teamId;
+        await user.save();
+    }
+
+    const updatedUser = await User.findById(req.user.id)
+      .populate('teamId', 'name color teamLeads')
+      .populate('secondaryTeamIds', 'name color')
+      .populate('managedTeams', 'name color')
+      .populate('referredBy', 'name email');
+
+    if (!updatedUser) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Generate new access token with updated teamId
+    const accessToken = generateAccessToken(updatedUser);
+    
+    logger.info(`User ${updatedUser.email} switched active team to ${teamId}`);
 
     res.json({
       success: true,
       accessToken,
-      user: user.toSafeObject(),
+      user: updatedUser.toSafeObject(),
     });
   } catch (err) {
     next(err);

@@ -195,10 +195,39 @@ router.post('/import', upload.single('file'), async (req, res, next) => {
           continue;
         }
 
-        const existing = await User.findOne({ email: normalized.email }).select('_id');
+        const existing = await User.findOne({ email: normalized.email });
         if (existing) {
+          // If admin is adding an existing user to a NEW team, update secondaryTeamIds
+          let teamId = null;
+          if (normalized.teamName) {
+            teamId = teamByName.get(normalized.teamName.toLowerCase()) || null;
+            if (!teamId) {
+              rowResult.status = 'error';
+              rowResult.message = `Unknown team: ${normalized.teamName}`;
+              results.errors += 1;
+              results.rows.push(rowResult);
+              continue;
+            }
+          }
+
+          if (teamId) {
+            if (!existing.secondaryTeamIds) existing.secondaryTeamIds = [];
+            const isMainTeam = existing.teamId && existing.teamId.toString() === teamId.toString();
+            const isSecondary = existing.secondaryTeamIds.some(id => id.toString() === teamId.toString());
+
+            if (!isMainTeam && !isSecondary) {
+              existing.secondaryTeamIds.push(teamId);
+              await existing.save();
+              rowResult.status = 'updated';
+              rowResult.message = 'Added to secondary team';
+              results.created += 1; // Count as success
+              results.rows.push(rowResult);
+              continue;
+            }
+          }
+
           rowResult.status = 'skipped';
-          rowResult.message = 'Email already exists';
+          rowResult.message = 'Email already exists in this team';
           results.skipped += 1;
           results.rows.push(rowResult);
           continue;
@@ -322,9 +351,10 @@ router.post('/import-members', upload.single('file'), async (req, res, next) => 
       }
       seenEmails.add(r.email);
 
-      // CA must be in Marketing team
-      if (r.role === 'campus_ambassador' && String(r.teamName).trim().toLowerCase() !== 'marketing') {
-        failures.push({ row: rowNumber, email: r.email, reason: `Campus Ambassadors can only be in the Marketing team. Got: "${r.teamName}"` });
+      // CA must be in allowed teams
+      const teamNameLower = String(r.teamName).trim().toLowerCase();
+      if (r.role === 'campus_ambassador' && !['marketing', 'online marketing'].includes(teamNameLower)) {
+        failures.push({ row: rowNumber, email: r.email, reason: `Campus Ambassadors can only be in the Marketing or Online Marketing team. Got: "${r.teamName}"` });
         continue;
       }
 
@@ -350,34 +380,51 @@ router.post('/import-members', upload.single('file'), async (req, res, next) => 
       });
     }
 
-    // Skip duplicates already in DB (single query)
-    const emails = prepared.map((r) => r.email);
-    const existing = await User.find({ email: { $in: emails } }).select('email');
-    const existingSet = new Set(existing.map((u) => String(u.email).toLowerCase()));
+    // Ensure teams exist (create missing) - needed for existing user check and new inserts
+    const teamNames = prepared.map((r) => r.teamName);
+    const teamByLowerName = await ensureTeamsByName(teamNames);
 
     const toInsert = [];
+    let successfullyAddedCount = 0; 
+
     for (const r of prepared) {
-      if (existingSet.has(r.email)) {
-        failures.push({ row: r.row, email: r.email, reason: 'Email already exists (skipped)' });
+      const existingUser = await User.findOne({ email: r.email });
+      if (existingUser) {
+        // Find team
+        const targetTeamId = teamByLowerName.get(String(r.teamName).trim().toLowerCase());
+        if (targetTeamId) {
+          if (!existingUser.secondaryTeamIds) existingUser.secondaryTeamIds = [];
+          const isMainTeam = existingUser.teamId && existingUser.teamId.toString() === targetTeamId.toString();
+          const isSecondary = existingUser.secondaryTeamIds.some(id => id.toString() === targetTeamId.toString());
+
+          if (!isMainTeam && !isSecondary) {
+            // ONLY ADMIN can add existing user to second team
+            if (req.user.role !== 'admin') {
+              failures.push({ row: r.row, email: r.email, reason: 'Email already exists in another team' });
+              continue;
+            }
+            existingUser.secondaryTeamIds.push(targetTeamId);
+            await existingUser.save();
+            successfullyAddedCount += 1;
+            continue; // Handled as update
+          }
+        }
+        failures.push({ row: r.row, email: r.email, reason: 'Email already exists in this team (skipped)' });
         continue;
       }
       toInsert.push(r);
     }
 
-    if (toInsert.length === 0) {
+    if (toInsert.length === 0 && successfullyAddedCount === 0) {
       return res.json({
         success: true,
         totalRecords: rows.length,
-        successfullyAdded: 0,
+        successfullyAdded: successfullyAddedCount,
         failedCount: failures.length,
         failedEntries: failures,
         message: 'All rows were skipped/invalid (no new users created)',
       });
     }
-
-    // Ensure teams exist (create missing)
-    const teamNames = toInsert.map((r) => r.teamName);
-    const teamByLowerName = await ensureTeamsByName(teamNames);
 
     const defaultPassword = process.env.IMPORT_MEMBERS_DEFAULT_PASSWORD || process.env.DEFAULT_MEMBER_PASSWORD || null;
     const defaultPasswordHash = defaultPassword ? await bcrypt.hash(defaultPassword, 12) : null;
@@ -411,37 +458,34 @@ router.post('/import-members', upload.single('file'), async (req, res, next) => 
       });
     }
 
-    let successfullyAdded = 0;
-
     if (docs.length > 0) {
       const insertDocs = docs.map((d) => d.document);
       try {
         const created = await User.insertMany(insertDocs, { ordered: false });
-        successfullyAdded = Array.isArray(created) ? created.length : 0;
+        successfullyAddedCount += Array.isArray(created) ? created.length : 0;
 
-        // Fix 5: Generate referral codes for CA users in Marketing team
+        // Referral code generation
         const caUsers = Array.isArray(created)
           ? created.filter(u => u.role === 'campus_ambassador')
           : [];
         for (const caUser of caUsers) {
           try {
             const team = await Team.findById(caUser.teamId).select('name');
-            if (team && team.name === 'Marketing' && !caUser.referralCode) {
-              // Generate unique referral code
+            const teamNameLower = team?.name?.toLowerCase();
+            if (['marketing', 'online marketing'].includes(teamNameLower) && !caUser.referralCode) {
               const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
               let code = '';
               for (let i = 0; i < 8; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
-              // Ensure uniqueness
               const existingCode = await User.findOne({ referralCode: code }).select('_id');
               if (!existingCode) {
                 await User.findByIdAndUpdate(caUser._id, { referralCode: code });
               }
             }
-          } catch (_) { /* skip referral code gen failure silently */ }
+          } catch (_) { /* skip */ }
         }
       } catch (err) {
         const insertedCount = Array.isArray(err.insertedDocs) ? err.insertedDocs.length : 0;
-        successfullyAdded = insertedCount;
+        successfullyAddedCount += insertedCount;
 
         const writeErrors = Array.isArray(err.writeErrors) ? err.writeErrors : [];
         for (const we of writeErrors) {
@@ -459,7 +503,7 @@ router.post('/import-members', upload.single('file'), async (req, res, next) => 
     return res.json({
       success: true,
       totalRecords: rows.length,
-      successfullyAdded,
+      successfullyAdded: successfullyAddedCount,
       failedCount: failures.length,
       failedEntries: failures,
     });

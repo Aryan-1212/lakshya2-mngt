@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useQueryClient } from '@tanstack/react-query'
 import { getManagedTeams } from '../api'
 import toast from 'react-hot-toast'
 
@@ -22,18 +23,38 @@ const ROLE_COLORS = {
 
 export default function Sidebar({ links, title }) {
     const { user, logout, switchTeam } = useAuth()
+    const qc = useQueryClient()
     const navigate = useNavigate()
     const [open, setOpen] = useState(false)
     const [managedTeams, setManagedTeams] = useState([])
     const [switching, setSwitching] = useState(false)
 
     useEffect(() => {
+        // Leaders always fetch managed teams
         if (user?.role === 'teamleader') {
             getManagedTeams()
                 .then(res => setManagedTeams(res.data.teams || []))
                 .catch(() => setManagedTeams([]))
+        } else if (user?.secondaryTeamIds?.length > 0) {
+            // For others, if they have secondary teams, make sure they are in the list
+            // We can derive the list from user object, but managedTeams state is used for UI
+            const teams = [
+                user.teamId,
+                ...user.secondaryTeamIds
+            ].filter(Boolean);
+            // unique by _id
+            const uniqueTeams = [];
+            const seen = new Set();
+            for (const t of teams) {
+                const id = t._id || t;
+                if (!seen.has(id.toString())) {
+                    seen.add(id.toString());
+                    uniqueTeams.push(t);
+                }
+            }
+            setManagedTeams(uniqueTeams);
         }
-    }, [user?.role])
+    }, [user?.role, user?.secondaryTeamIds, user?.teamId])
 
     const handleLogout = async () => {
         await logout()
@@ -46,6 +67,7 @@ export default function Sidebar({ links, title }) {
         try {
             setSwitching(true)
             await switchTeam(teamId)
+            qc.invalidateQueries() // Clear ALL cache to force fresh data for new team
             toast.success('Switched team successfully')
             setOpen(false)
             navigate('/') // Go to dashboard of new team
@@ -109,8 +131,8 @@ export default function Sidebar({ links, title }) {
                             </div>
                         </div>
 
-                        {/* Team Switcher for TLs */}
-                        {user.role === 'teamleader' && managedTeams.length > 1 && (
+                        {/* Team Switcher for anyone with multiple teams */}
+                        {managedTeams.length > 1 && (
                             <div className="px-2 pt-1">
                                 <label className="block text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1 ml-1">
                                     Switch Team

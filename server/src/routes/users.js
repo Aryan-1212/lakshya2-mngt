@@ -10,14 +10,15 @@ const { validate, createUserSchema, updateUserSchema } = require('../validators/
 
 const router = express.Router();
 
-// Helper: ensure CA is only assigned to Marketing team
-const assertCAInMarketing = async (role, teamId) => {
+// Helper: ensure CA is assigned to allowed teams (Marketing or Online Marketing)
+const assertCAValidTeam = async (role, teamId) => {
   if (role !== 'campus_ambassador') return null; // no constraint
-  if (!teamId) return 'Campus Ambassadors must be assigned to the Marketing team.';
+  if (!teamId) return 'Campus Ambassadors must be assigned to an allowed team.';
   const team = await Team.findById(teamId).select('name');
   if (!team) return 'Team not found.';
-  if (team.name.toLowerCase() !== 'marketing') {
-    return `Campus Ambassadors can only be in the Marketing team, not "${team.name}".`;
+  const allowedTeams = ['marketing', 'online marketing'];
+  if (!allowedTeams.includes(team.name.toLowerCase())) {
+    return `Campus Ambassadors can only be in the Marketing or Online Marketing team, not "${team.name}".`;
   }
   return null; // OK
 };
@@ -30,7 +31,7 @@ router.get('/', async (req, res, next) => {
   try {
     const { role, teamId } = req.user;
     let filter = {};
-    if (role === 'teamleader') filter.teamId = teamId;
+    if (role === 'teamleader') filter.$or = [{ teamId }, { secondaryTeamIds: teamId }];
     else if (role === 'member' || role === 'campus_ambassador') {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
@@ -45,12 +46,13 @@ router.get('/', async (req, res, next) => {
       ];
     }
     if (req.query.role) filter.role = req.query.role;
-    if (req.query.teamId && role === 'admin') filter.teamId = req.query.teamId;
+    if (req.query.teamId && role === 'admin') filter.$or = [{ teamId: req.query.teamId }, { secondaryTeamIds: req.query.teamId }];
 
     const [users, total] = await Promise.all([
       User.find(filter)
         .select('-passwordHash -refreshTokenHash')
         .populate('teamId', 'name color')
+        .populate('secondaryTeamIds', 'name color')
         .populate('managedTeams', 'name color')
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -83,9 +85,10 @@ router.get('/team/:teamId', requireRole('teamleader', 'admin'), async (req, res,
     if (req.user.role === 'teamleader' && req.user.teamId?.toString() !== req.params.teamId) {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
-    const users = await User.find({ teamId: req.params.teamId })
+    const users = await User.find({ $or: [{ teamId: req.params.teamId }, { secondaryTeamIds: req.params.teamId }] })
       .select('-passwordHash -refreshTokenHash')
       .populate('teamId', 'name color')
+      .populate('secondaryTeamIds', 'name color')
       .sort({ createdAt: -1 });
     res.json({ success: true, users, total: users.length });
   } catch (err) {
@@ -103,13 +106,33 @@ router.post('/team/:teamId', requireRole('teamleader', 'admin'), validate(create
     
     // check unique
     const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ success: false, message: 'Email already exists' });
+    if (existing) {
+      if (req.params.teamId && existing.teamId && existing.teamId.toString() !== req.params.teamId.toString()) {
+        // ONLY ADMIN can add existing user to a second team
+        if (req.user.role !== 'admin') {
+          return res.status(400).json({ success: false, message: 'Email already exists' });
+        }
+        if (!existing.secondaryTeamIds) existing.secondaryTeamIds = [];
+        const isSecondary = existing.secondaryTeamIds.some(id => id.toString() === req.params.teamId.toString());
+        if (!isSecondary) {
+          existing.secondaryTeamIds.push(req.params.teamId);
+          await existing.save();
+          return res.status(200).json({ 
+            success: true, 
+            message: 'User already exists, added to secondary team',
+            user: existing.toSafeObject() 
+          });
+        }
+        return res.status(400).json({ success: false, message: 'Email already exists in this team' });
+      }
+      return res.status(400).json({ success: false, message: 'Email already exists' });
+    }
     
     if (req.user.role === 'teamleader' && !['member', 'campus_ambassador'].includes(role)) {
        return res.status(403).json({ success: false, message: 'Cannot create other roles' });
     }
-    // CA must be Marketing team
-    const caErr = await assertCAInMarketing(role, req.params.teamId);
+    // CA validation
+    const caErr = await assertCAValidTeam(role, req.params.teamId);
     if (caErr) return res.status(400).json({ success: false, message: caErr });
 
     const passwordHash = await bcrypt.hash(password, 12);
@@ -261,9 +284,9 @@ router.post('/team/:teamId/import-members', requireRole('teamleader', 'admin'), 
         continue;
       }
 
-      // CA must be in Marketing team
-      if (role === 'campus_ambassador' && team.name.toLowerCase() !== 'marketing') {
-        failures.push({ row: rowNumber, email, reason: `Campus Ambassadors can only be in the Marketing team. This import is for team "${team.name}" — please remove CA rows or switch to the Marketing team.` });
+      // CA must be in allowed teams
+      if (role === 'campus_ambassador' && !['marketing', 'online marketing'].includes(team.name.toLowerCase())) {
+        failures.push({ row: rowNumber, email, reason: `Campus Ambassadors can only be in the Marketing or Online Marketing team. This import is for team "${team.name}" — please remove CA rows or switch to an allowed team.` });
         continue;
       }
 
@@ -302,16 +325,15 @@ router.post('/team/:teamId/import-members', requireRole('teamleader', 'admin'), 
 
       // Generate referral codes for CA imports in Marketing team
       const caUsers = (Array.isArray(created) ? created : []).filter(u => u.role === 'campus_ambassador');
-      if (team.name === 'Marketing' && caUsers.length > 0) {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        for (const caUser of caUsers) {
-          try {
-            if (!caUser.referralCode) {
-              let code = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-              const exists = await User.findOne({ referralCode: code }).select('_id');
-              if (!exists) await User.findByIdAndUpdate(caUser._id, { referralCode: code });
-            }
-          } catch (_) {}
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      for (const caUser of caUsers) {
+        if (!caUser.referralCode) {
+          const teamNameLower = team.name.toLowerCase();
+          if (['marketing', 'online marketing'].includes(teamNameLower)) {
+            let code = Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+            const exists = await User.findOne({ referralCode: code }).select('_id');
+            if (!exists) await User.findByIdAndUpdate(caUser._id, { referralCode: code });
+          }
         }
       }
     } catch (err) {
@@ -344,9 +366,25 @@ router.post('/', requireRole('admin'), validate(createUserSchema), async (req, r
   try {
     const { name, email, password, role, teamId, phone } = req.body;
     const existing = await User.findOne({ email });
-    if (existing) return res.status(400).json({ success: false, message: 'Email already exists' });
-    // CA must be Marketing team
-    const caErr = await assertCAInMarketing(role, teamId);
+    if (existing) {
+      if (teamId && existing.teamId && existing.teamId.toString() !== teamId.toString()) {
+        if (!existing.secondaryTeamIds) existing.secondaryTeamIds = [];
+        const isSecondary = existing.secondaryTeamIds.some(id => id.toString() === teamId.toString());
+        if (!isSecondary) {
+          existing.secondaryTeamIds.push(teamId);
+          await existing.save();
+          return res.status(200).json({ 
+            success: true, 
+            message: 'User already exists, added to secondary team',
+            user: existing.toSafeObject() 
+          });
+        }
+        return res.status(400).json({ success: false, message: 'User already exists in this team' });
+      }
+      return res.status(400).json({ success: false, message: 'Email already exists' });
+    }
+    // CA validation
+    const caErr = await assertCAValidTeam(role, teamId);
     if (caErr) return res.status(400).json({ success: false, message: caErr });
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await User.create({
@@ -364,10 +402,11 @@ router.post('/', requireRole('admin'), validate(createUserSchema), async (req, r
 router.put('/:id', requireRole('admin'), validate(updateUserSchema), async (req, res, next) => {
   try {
     const update = {};
-    const { name, role, teamId, isActive, email, phone } = req.body;
+    const { name, role, teamId, secondaryTeamIds, isActive, email, phone } = req.body;
     if (name !== undefined) update.name = name;
     if (role !== undefined) update.role = role;
     if (teamId !== undefined) update.teamId = teamId || null;
+    if (secondaryTeamIds !== undefined) update.secondaryTeamIds = secondaryTeamIds || [];
     if (isActive !== undefined) update.isActive = isActive;
     if (phone !== undefined) update.phone = phone;
     if (email) {
@@ -379,7 +418,7 @@ router.put('/:id', requireRole('admin'), validate(updateUserSchema), async (req,
     // CA must be Marketing team (check effective role and teamId)
     const effectiveRole = role !== undefined ? role : (await User.findById(req.params.id).select('role'))?.role;
     const effectiveTeamId = teamId !== undefined ? (teamId || null) : (await User.findById(req.params.id).select('teamId'))?.teamId;
-    const caErr = await assertCAInMarketing(effectiveRole, effectiveTeamId);
+    const caErr = await assertCAValidTeam(effectiveRole, effectiveTeamId);
     if (caErr) return res.status(400).json({ success: false, message: caErr });
 
     const user = await User.findByIdAndUpdate(req.params.id, update, { new: true, runValidators: true }).select('-passwordHash -refreshTokenHash').populate('teamId', 'name');

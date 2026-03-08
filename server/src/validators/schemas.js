@@ -35,6 +35,7 @@ const createUserSchema = Joi.object({
   password: strongPassword.required(),
   role: Joi.string().valid('admin', 'teamleader', 'faculty', 'member', 'campus_ambassador').required(),
   teamId: Joi.string().hex().length(24).allow(null, '').optional(),
+  secondaryTeamIds: Joi.array().items(Joi.string().hex().length(24)).optional(),
   phone: Joi.string().pattern(/^\d{10}$/).allow(null, '').optional()
     .messages({ 'string.pattern.base': 'Phone must be exactly 10 digits' }),
 });
@@ -45,6 +46,7 @@ const updateUserSchema = Joi.object({
   role: Joi.string().valid('admin', 'teamleader', 'faculty', 'member', 'campus_ambassador').optional(),
   teamId: Joi.string().hex().length(24).allow(null, '').optional(),
   isActive: Joi.boolean().optional(),
+  secondaryTeamIds: Joi.array().items(Joi.string().hex().length(24)).optional(),
   phone: Joi.string().pattern(/^\d{10}$/).allow(null, '').optional()
     .messages({ 'string.pattern.base': 'Phone must be exactly 10 digits' }),
 });
