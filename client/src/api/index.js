@@ -122,4 +122,5 @@ export const markAttendance = (data) => api.post('/attendance', data)
 export const updateAttendance = (id, data) => api.patch(`/attendance/${id}`, data)
 export const deleteAttendance = (id) => api.delete(`/attendance/${id}`)
 export const sendBulkEmail = (data) => api.post('/emails/send-bulk', data)
+export const previewTargets = (params) => api.get('/emails/preview-targets', { params })
 

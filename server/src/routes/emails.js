@@ -11,6 +11,45 @@ router.use(verifyToken);
 router.use(requireRole('admin'));
 
 /**
+ * GET /api/emails/preview-targets
+ * Preview which emails will be targeted by roles and teams.
+ */
+router.get('/preview-targets', async (req, res, next) => {
+  try {
+    const { roles, teams } = req.query;
+    
+    // Convert comma-separated strings to arrays if they exist
+    const rolesArr = roles ? roles.split(',').filter(Boolean) : [];
+    const teamsArr = teams ? teams.split(',').filter(Boolean) : [];
+
+    if (rolesArr.length === 0 && teamsArr.length === 0) {
+      return res.json({ success: true, emails: [], count: 0 });
+    }
+
+    const query = { $or: [] };
+    
+    if (rolesArr.length > 0) {
+      query.$or.push({ role: { $in: rolesArr } });
+    }
+    
+    if (teamsArr.length > 0) {
+      query.$or.push({ teamId: { $in: teamsArr } });
+      query.$or.push({ secondaryTeamIds: { $in: teamsArr } });
+    }
+
+    const users = await User.find(query).select('email').lean();
+    const emails = Array.from(new Set(users.map(u => u.email).filter(Boolean).map(e => e.toLowerCase())));
+
+    res.json({ 
+      success: true, 
+      emails,
+      count: emails.length 
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+/**
  * POST /api/emails/send-bulk
  * Target users by roles, teams, or specific emails.
  */
