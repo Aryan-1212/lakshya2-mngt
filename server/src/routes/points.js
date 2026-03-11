@@ -1,6 +1,6 @@
 const express = require('express');
 const { PointsLedger } = require('../models/PointsLedger');
-const { User } = require('../models/User');
+const { User } = require('../models/EnhancedUser');
 const { verifyToken } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
 const { validate, pointsOverrideSchema } = require('../validators/schemas');

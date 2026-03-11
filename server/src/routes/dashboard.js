@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const { Task } = require('../models/Task');
-const { User } = require('../models/User');
+const { User } = require('../models/EnhancedUser');
 const { Submission } = require('../models/Submission');
 const { PointsLedger } = require('../models/PointsLedger');
 const { Announcement } = require('../models/Announcement');
@@ -22,7 +22,7 @@ router.get('/admin', requireRole('admin'), async (req, res, next) => {
       tasksByStatus, pointsByTeam, topVolunteers,
       recentAnnouncements, recentResources,
     ] = await Promise.all([
-      User.countDocuments({ isActive: true }),
+      User.countDocuments(),
       Team.countDocuments(),
       Task.countDocuments(),
       Event.countDocuments({ isActive: true }),
@@ -84,7 +84,7 @@ router.get('/teamleader', requireRole('admin', 'teamleader'), async (req, res, n
 
     const [team, members, tasksByStatus, recentSubmissions, topMembers, pendingSubmissions] = await Promise.all([
       Team.findById(teamId).populate('teamLeads', 'name'),
-      User.find({ teamId, isActive: true }).select('name email role'),
+      User.find({ $or: [{ teamId }, { secondaryTeamIds: teamId }], isActive: true }).select('name email role'),
       Task.aggregate([
         { $match: { teamId: teamObjId } },
         { $group: { _id: '$status', count: { $sum: 1 } } },

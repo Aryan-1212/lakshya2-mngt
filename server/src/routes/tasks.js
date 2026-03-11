@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const { Task } = require('../models/Task');
-const { User } = require('../models/User');
+const { User } = require('../models/EnhancedUser');
 const { verifyToken } = require('../middleware/auth');
 const { requireRole, blockFacultyWrite } = require('../middleware/rbac');
 const { requireTeamScope } = require('../middleware/teamScope');

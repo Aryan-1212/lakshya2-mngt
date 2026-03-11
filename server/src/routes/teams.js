@@ -38,7 +38,7 @@ router.get('/:id', async (req, res, next) => {
   try {
     const team = await Team.findById(req.params.id).populate('teamLeads', 'name email');
     if (!team) return res.status(404).json({ success: false, message: 'Team not found' });
-    const members = await User.find({ teamId: req.params.id, isActive: true }).select('name email role avatarUrl').sort({ name: 1 });
+    const members = await User.find({ $or: [{ teamId: req.params.id }, { secondaryTeamIds: req.params.id }], isActive: true }).select('name email role avatarUrl').sort({ name: 1 });
     res.json({ success: true, team, members });
   } catch (err) {
     next(err);

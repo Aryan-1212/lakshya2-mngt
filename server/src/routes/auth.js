@@ -1,7 +1,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
-const { User } = require('../models/User');
+const { User } = require('../models/EnhancedUser');
 const { verifyToken } = require('../middleware/auth');
 const {
   generateAccessToken,

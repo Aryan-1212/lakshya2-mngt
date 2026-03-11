@@ -1,5 +1,5 @@
 const express = require('express');
-const { User } = require('../models/User');
+const { User } = require('../models/EnhancedUser');
 const { sendBatchEmails } = require('../utils/resendMailer');
 const { verifyToken } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');

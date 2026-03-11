@@ -1,6 +1,6 @@
 const express = require('express');
 const { Announcement, AnnouncementRead } = require('../models/Announcement');
-const { User } = require('../models/User');
+const { User } = require('../models/EnhancedUser');
 const { verifyToken } = require('../middleware/auth');
 const { requireRole, blockFacultyWrite } = require('../middleware/rbac');
 const { validate, announcementSchema } = require('../validators/schemas');

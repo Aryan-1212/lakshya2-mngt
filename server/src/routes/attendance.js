@@ -1,6 +1,6 @@
 const express = require('express');
 const { Attendance } = require('../models/Attendance');
-const { User } = require('../models/User');
+const { User } = require('../models/EnhancedUser');
 const { Task } = require('../models/Task');
 const { verifyToken } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
@@ -205,13 +205,29 @@ router.delete('/:id', requireRole('admin', 'teamleader'), async (req, res, next)
 });
 
 // GET /api/attendance/members/:teamId — get all team members for checklist
+// Returns ALL users in the team: primary members, secondary members, AND team leaders
 router.get('/members/:teamId', requireRole('admin', 'teamleader', 'faculty'), async (req, res, next) => {
   try {
     const { teamId } = req.params;
     if (!assertTeamAccess(req, teamId) && req.user.role !== 'faculty') {
       return res.status(403).json({ success: false, message: 'Access denied' });
     }
-    const members = await User.find({ teamId, isActive: true }).select('name email role');
+
+    // Get the team to find its leaders
+    const Team = require('../models/Team');
+    const team = await Team.findById(teamId).select('teamLeads');
+    const teamLeadIds = (team?.teamLeads || []).map(id => id.toString());
+
+    // Find all members: primary team, secondary team, OR listed as team lead
+    const members = await User.find({
+      $or: [
+        { teamId },
+        { secondaryTeamIds: teamId },
+        ...(teamLeadIds.length > 0 ? [{ _id: { $in: teamLeadIds } }] : []),
+      ],
+      isActive: true,
+    }).select('name email role');
+
     res.json({ success: true, members });
   } catch (err) {
     next(err);
