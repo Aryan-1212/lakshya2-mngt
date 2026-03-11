@@ -73,25 +73,32 @@ function AnnForm({ initial, onSubmit, loading, userRole }) {
                 <div className="flex items-end pb-1"><label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" checked={form.pinned} onChange={(e) => setForm((s) => ({ ...s, pinned: e.target.checked }))} /><span className="text-sm text-gray-300">📌 Pin announcement</span></label></div>
             </div>
 
-            {/* Send via Email checkbox */}
-            <div className="p-3 rounded-lg bg-dark-700 border border-dark-500">
-                <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={form.sendEmail}
-                        onChange={(e) => setForm((s) => ({ ...s, sendEmail: e.target.checked }))}
-                        className="w-5 h-5 rounded accent-primary-500"
-                    />
-                    <div>
-                        <span className="text-sm font-medium text-white">📧 Send via Email</span>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                            {form.sendEmail
-                                ? '✅ This announcement will also be emailed to all recipients'
-                                : 'Uncheck to keep this announcement web-only (no email sent)'}
-                        </p>
-                    </div>
-                </label>
-            </div>
+            {/* Send via Email checkbox - Only available for Team/Role scopes */}
+            {form.scope !== 'global' && (
+                <div className="p-3 rounded-lg bg-dark-700 border border-dark-500">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                            type="checkbox"
+                            checked={form.sendEmail}
+                            onChange={(e) => setForm((s) => ({ ...s, sendEmail: e.target.checked }))}
+                            className="w-5 h-5 rounded accent-primary-500"
+                        />
+                        <div>
+                            <span className="text-sm font-medium text-white">📧 Send via Email</span>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                                {form.sendEmail
+                                    ? `✅ Mails will be sent to all ${form.scope === 'team' ? 'team members' : 'selected roles'}`
+                                    : 'Uncheck to keep this announcement web-only (no email sent)'}
+                                {form.sendEmail && form.scope === 'role' && (
+                                    <span className="block text-amber-400/80 font-medium mt-1">
+                                        ⚠️ Note: Emails are not sent to Members or Campus Ambassadors.
+                                    </span>
+                                )}
+                            </p>
+                        </div>
+                    </label>
+                </div>
+            )}
 
             <button type="submit" className="btn-primary w-full justify-center" disabled={loading}>{loading ? '⏳ Saving...' : (initial ? '💾 Update' : '📢 Post Announcement')}</button>
         </form>

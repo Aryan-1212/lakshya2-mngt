@@ -4,6 +4,8 @@ const { User } = require('../models/EnhancedUser');
 const { verifyToken } = require('../middleware/auth');
 const { requireRole, blockFacultyWrite } = require('../middleware/rbac');
 const { validate, announcementSchema } = require('../validators/schemas');
+const { sendBatchEmails } = require('../utils/resendMailer');
+const logger = require('../config/logger');
 
 const router = express.Router();
 router.use(verifyToken);
@@ -121,6 +123,66 @@ router.post('/', requireRole('admin', 'teamleader'), blockFacultyWrite, validate
 
     const ann = await Announcement.create(body);
     await ann.populate('createdBy', 'name');
+
+    // Handle Email Notifications
+    if (ann.sendEmail && ann.scope !== 'global') {
+      // Create background task for email sending
+      (async () => {
+        try {
+          let recipientEmails = [];
+
+          if (ann.scope === 'team' && ann.teamId) {
+            const users = await User.find({ 
+              $or: [
+                { teamId: ann.teamId },
+                { secondaryTeamIds: ann.teamId }
+              ],
+              isActive: true 
+            }).select('email').lean();
+            recipientEmails = users.map(u => u.email).filter(Boolean);
+          } else if (ann.scope === 'role' && ann.targetRoles?.length > 0) {
+            // Exclude member and campus_ambassador as per user requirement
+            const filteredRoles = ann.targetRoles.filter(r => 
+              r !== 'member' && r !== 'campus_ambassador'
+            );
+
+            if (filteredRoles.length > 0) {
+              const users = await User.find({ 
+                role: { $in: filteredRoles },
+                isActive: true 
+              }).select('email').lean();
+              recipientEmails = users.map(u => u.email).filter(Boolean);
+            }
+          }
+
+          if (recipientEmails.length > 0) {
+            const subject = `📢 Announcement: ${ann.title}`;
+            const html = `
+              <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #ffffff;">
+                <h2 style="color: #4f46e5; margin-top: 0;">${ann.title}</h2>
+                <div style="color: #334155; line-height: 1.6; margin: 20px 0;">
+                  ${ann.body.replace(/\n/g, '<br>')}
+                </div>
+                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">
+                  Sent by ${req.user.name || 'Admin'} via TechFest Management Portal<br>
+                  ${new Date().toLocaleString()}
+                </p>
+              </div>
+            `;
+
+            logger.info(`Starting background email notifications for announcement ${ann._id} to ${recipientEmails.length} recipients`);
+            await sendBatchEmails(recipientEmails, subject, html);
+          } else {
+            logger.info(`No eligible recipients for announcement ${ann._id} email notification (Scope: ${ann.scope})`);
+          }
+        } catch (err) {
+          logger.error(`Failed to send announcement emails: ${err.message}`);
+        }
+      })();
+    } else if (ann.sendEmail && ann.scope === 'global') {
+      logger.warn(`Email notification skipped for global announcement ${ann._id}`);
+    }
 
     res.status(201).json({ success: true, announcement: ann });
   } catch (err) {
