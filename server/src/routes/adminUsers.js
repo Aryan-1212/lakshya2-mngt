@@ -7,7 +7,6 @@ const { User } = require('../models/EnhancedUser');
 const Team = require('../models/Team');
 const { verifyToken } = require('../middleware/auth');
 const { requireRole } = require('../middleware/rbac');
-const { sendBulkUserCredentialsEmail } = require('../utils/emailService');
 
 const router = express.Router();
 
@@ -260,11 +259,6 @@ router.post('/import', upload.single('file'), async (req, res, next) => {
 
         results.created += 1;
         rowResult.message = `Created user ${user._id}`;
-
-        if (sendEmail) {
-          await sendBulkUserCredentialsEmail(user.email, user.name, tempPassword, user.role);
-          rowResult.message += ' (email sent)';
-        }
 
         results.rows.push(rowResult);
       } catch (err) {

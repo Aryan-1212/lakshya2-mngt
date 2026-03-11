@@ -4,7 +4,6 @@ const { User } = require('../models/EnhancedUser');
 const { verifyToken } = require('../middleware/auth');
 const { requireRole, blockFacultyWrite } = require('../middleware/rbac');
 const { validate, announcementSchema } = require('../validators/schemas');
-const { sendEmail, sendBatchEmails } = require('../utils/resendMailer');
 
 const router = express.Router();
 router.use(verifyToken);
@@ -98,45 +97,6 @@ router.post('/:id/read', async (req, res, next) => {
   }
 });
 
-/**
- * Helper: collect recipient emails based on announcement scope.
- */
-async function getRecipientEmails(announcement) {
-  let filter = { isActive: true };
-
-  if (announcement.scope === 'global') {
-    // All active users
-  } else if (announcement.scope === 'team' && announcement.teamId) {
-    filter.teamId = announcement.teamId;
-  } else if (announcement.scope === 'role' && announcement.targetRoles?.length) {
-    filter.role = { $in: announcement.targetRoles };
-  }
-
-  const users = await User.find(filter).select('email');
-  return users.map((u) => u.email).filter(Boolean);
-}
-
-/**
- * Build announcement email HTML.
- */
-function buildAnnouncementEmail(announcement, creatorName) {
-  return `
-    <div style="max-width:600px;margin:0 auto;background:#0f0f23;border-radius:12px;overflow:hidden;font-family:Arial,sans-serif;">
-      <div style="background:linear-gradient(135deg,#6366f1,#ec4899);padding:25px 30px;">
-        <h1 style="margin:0;color:white;font-size:20px;">📢 ${announcement.title}</h1>
-        <p style="margin:5px 0 0;color:rgba(255,255,255,0.8);font-size:13px;">
-          By ${creatorName} · ${announcement.scope === 'global' ? '🌐 Global' : announcement.scope === 'team' ? '🏷️ Team' : '👤 Role-based'}
-        </p>
-      </div>
-      <div style="padding:25px 30px;color:#e2e8f0;line-height:1.7;font-size:15px;">
-        ${announcement.body.replace(/\n/g, '<br>')}
-      </div>
-      <div style="padding:15px 30px;background:#1a1a2e;text-align:center;">
-        <p style="margin:0;color:#6b7280;font-size:12px;">TechFest Management System · Announcement</p>
-      </div>
-    </div>
-  `;
-}
 
 // POST /api/announcements — Admin or TL
 // Admin = global only (can still pick global/team/role)
@@ -161,21 +121,6 @@ router.post('/', requireRole('admin', 'teamleader'), blockFacultyWrite, validate
 
     const ann = await Announcement.create(body);
     await ann.populate('createdBy', 'name');
-
-    // If sendEmail is checked, fire off the email asynchronously
-    if (ann.sendEmail) {
-      (async () => {
-        try {
-          const emails = await getRecipientEmails(ann);
-          if (emails.length > 0) {
-            const html = buildAnnouncementEmail(ann, req.user.name || 'Admin');
-            await sendBatchEmails(emails, `📢 ${ann.title}`, html);
-          }
-        } catch (emailErr) {
-          console.error('Announcement email failed:', emailErr.message);
-        }
-      })();
-    }
 
     res.status(201).json({ success: true, announcement: ann });
   } catch (err) {

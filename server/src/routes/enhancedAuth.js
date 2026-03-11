@@ -13,7 +13,6 @@ const {
   verifyRefreshToken,
 } = require('../utils/tokenUtils');
 const { validate, loginSchema, forgotPasswordSchema, resetPasswordSchema } = require('../validators/schemas');
-const { sendPasswordResetEmail, sendEmailVerificationEmail } = require('../utils/emailService');
 const logger = require('../config/logger');
 
 const router = express.Router();
@@ -120,10 +119,7 @@ router.post('/forgot-password', passwordResetLimiter, validate(forgotPasswordSch
       requestedByUa: req.get('User-Agent'),
     });
 
-    // Send reset email
-    await sendPasswordResetEmail(user.email, resetToken, user.name);
-    
-    logger.info(`Password reset requested for user: ${user.email}`);
+    logger.info(`Password reset token generated for user: ${user.email}`);
     
     res.json({ 
       success: true, 
@@ -250,10 +246,7 @@ router.post('/resend-verification', async (req, res, next) => {
     user.emailVerificationExpires = expiresAt;
     await user.save();
 
-    // Send verification email
-    await sendEmailVerificationEmail(user.email, verificationToken, user.name);
-    
-    logger.info(`Email verification resent for user: ${user.email}`);
+    logger.info(`Email verification token regenerated for user: ${user.email}`);
     
     res.json({ success: true, message: 'Verification email sent' });
   } catch (err) {

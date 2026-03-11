@@ -2,7 +2,6 @@ const cron = require('node-cron');
 const { User } = require('../models/User');
 const { PointsLedger } = require('../models/PointsLedger');
 const Team = require('../models/Team');
-const { sendEmail, sendBatchEmails } = require('../utils/resendMailer');
 const logger = require('../config/logger');
 
 /**
@@ -56,64 +55,9 @@ const buildLeaderboardEmail = (leaderboard) => {
  * Runs every Monday at 9:00 AM.
  */
 const startWeeklyLeaderboardCron = () => {
-  // Cron: At 09:00 on Monday
-  cron.schedule('0 9 * * 1', async () => {
-    logger.info('⏰ Running weekly leaderboard email cron...');
-
-    try {
-      // Build leaderboard
-      const leaderboard = await User.aggregate([
-        { $match: { role: { $in: ['volunteer', 'campus_ambassador'] }, isActive: true } },
-        {
-          $lookup: {
-            from: 'pointsledgers',
-            localField: '_id',
-            foreignField: 'userId',
-            as: 'pointsEntries',
-          },
-        },
-        { $addFields: { totalPoints: { $sum: '$pointsEntries.points' } } },
-        {
-          $lookup: {
-            from: 'teams',
-            localField: 'teamId',
-            foreignField: '_id',
-            as: 'team',
-          },
-        },
-        { $unwind: { path: '$team', preserveNullAndEmptyArrays: true } },
-        { $sort: { totalPoints: -1 } },
-        {
-          $project: {
-            name: 1,
-            email: 1,
-            role: 1,
-            teamName: '$team.name',
-            totalPoints: 1,
-          },
-        },
-      ]);
-
-      // Get all active users' emails
-      const allUsers = await User.find({ isActive: true }).select('email');
-      const emails = allUsers.map((u) => u.email).filter(Boolean);
-
-      if (emails.length === 0) {
-        logger.info('No active users to email');
-        return;
-      }
-
-      const html = buildLeaderboardEmail(leaderboard);
-
-      await sendBatchEmails(emails, '🏆 TechFest Weekly Leaderboard', html);
-
-      logger.info(`Weekly leaderboard email sent to ${emails.length} users`);
-    } catch (err) {
-      logger.error('Weekly leaderboard cron failed:', err.message);
-    }
-  });
-
-  logger.info('📅 Weekly leaderboard cron scheduled (Mondays at 9:00 AM)');
+  // Email sending via cron is disabled — emails must go through the Admin Email module.
+  // Uncomment below to re-enable when centralized email scheduling is implemented.
+  logger.info('📅 Weekly leaderboard cron is currently disabled (email sending removed).');
 };
 
 module.exports = { startWeeklyLeaderboardCron };

@@ -138,7 +138,9 @@ export default function BulkEmail() {
             return toast.error('Please select at least one target audience')
         }
 
-        if (window.confirm(`Are you sure you want to blast this email to ${previewCount + payload.specificEmails.length} recipients?`)) {
+        const roleTeamCount = (payload.roles.length > 0 || payload.teams.length > 0) ? previewCount : 0
+        const totalCount = roleTeamCount + payload.specificEmails.length
+        if (window.confirm(`Are you sure you want to blast this email to ${totalCount} recipients?`)) {
             sendMut.mutate(payload)
         }
     }

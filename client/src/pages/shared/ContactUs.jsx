@@ -105,8 +105,8 @@ export default function ContactUs() {
                         </p>
                         <div className="text-sm text-gray-300 space-y-1.5">
                             <p>📧 <a href="mailto:aryanparvani12@gmail.com" className="text-primary-400 hover:underline">aryanparvani12@gmail.com</a></p>
-                            <p>📧 <a href="mailto:aakub1096@gmail.com" className="text-primary-400 hover:underline">aakub1096@gmail.com</a></p>
                             <p>📧 <a href="mailto:kvshah25092005@gmail.com" className="text-primary-400 hover:underline">kvshah25092005@gmail.com</a></p>
+                            <p>📧 <a href="mailto:aakub1096@gmail.com" className="text-primary-400 hover:underline">aakub1096@gmail.com</a></p>
                         </div>
                     </div>
                 </div>

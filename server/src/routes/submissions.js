@@ -317,10 +317,20 @@ router.get('/', async (req, res, next) => {
       filter.submittedBy = userId;
     }
 
-    // For TL: restrict to tasks belonging to their team — do a DB-level query
+    // For TL: restrict to tasks belonging to their team
     if (role === 'teamleader' && teamId) {
-      const teamTaskIds = await Task.find({ teamId }).distinct('_id');
-      filter.taskId = { $in: teamTaskIds };
+      if (req.query.taskId) {
+        // Specific task requested — verify it belongs to this TL's team (access check only, don't overwrite filter)
+        const taskBelongsToTeam = await Task.exists({ _id: req.query.taskId, teamId });
+        if (!taskBelongsToTeam) {
+          return res.status(403).json({ success: false, message: 'Access denied: task does not belong to your team' });
+        }
+        // filter.taskId is already set correctly from req.query.taskId above — do NOT overwrite it
+      } else {
+        // No specific task — show all submissions for this TL's team
+        const teamTaskIds = await Task.find({ teamId }).distinct('_id');
+        filter.taskId = { $in: teamTaskIds };
+      }
     }
 
     const [submissions, total] = await Promise.all([
