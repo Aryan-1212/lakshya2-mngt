@@ -165,7 +165,7 @@ router.post('/', requireRole('admin', 'teamleader'), blockFacultyWrite, validate
                 </div>
                 <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;">
                 <p style="font-size: 12px; color: #64748b; margin-bottom: 0;">
-                  Sent by ${req.user.name || 'Admin'} via TechFest Management Portal<br>
+                  Sent via <a href="https://lakshya-mngt.online/" style="color: #4f46e5; text-decoration: none; font-weight: 600;">TechFest Management Portal</a><br>
                   ${new Date().toLocaleString()}
                 </p>
               </div>

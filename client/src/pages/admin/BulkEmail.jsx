@@ -112,7 +112,7 @@ export default function BulkEmail() {
                     </div>
                 </div>
                 <div style="background-color: #f3f4f6; padding: 16px 24px; text-align: center; color: #9ca3af; font-size: 12px;">
-                    This is an automated notification from the Technfest Management Portal.<br>
+                    This is an automated notification from the <a href="https://lakshya-mngt.online/" style="color: #6366f1; text-decoration: none; font-weight: 600;">Technical Management Portal</a>.<br>
                     &copy; 2026 TechFest Organization. All rights reserved.
                 </div>
             </div>

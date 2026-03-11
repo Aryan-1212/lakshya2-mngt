@@ -110,7 +110,7 @@ const sendPasswordResetEmail = async (email, token, userName) => {
           <p>If you have any issues, please contact the support team.</p>
         </div>
         <div class="footer">
-          <p>Best regards,<br>TechFest Management Team</p>
+          <p>Best regards,<br><a href="https://lakshya-mngt.online/" style="color: #667eea; text-decoration: none; font-weight: 600;">TechFest Management Team</a></p>
         </div>
       </div>
     </body>
@@ -133,6 +133,7 @@ const sendPasswordResetEmail = async (email, token, userName) => {
     
     Best regards,
     TechFest Management Team
+    https://lakshya-mngt.online/
   `;
 
   return sendEmail(email, 'Password Reset - TechFest Management', html, text);
@@ -179,7 +180,7 @@ const sendEmailVerificationEmail = async (email, token, userName) => {
           <p>If you have any issues, please contact the support team.</p>
         </div>
         <div class="footer">
-          <p>Best regards,<br>TechFest Management Team</p>
+          <p>Best regards,<br><a href="https://lakshya-mngt.online/" style="color: #667eea; text-decoration: none; font-weight: 600;">TechFest Management Team</a></p>
         </div>
       </div>
     </body>
@@ -202,6 +203,7 @@ const sendEmailVerificationEmail = async (email, token, userName) => {
     
     Best regards,
     TechFest Management Team
+    https://lakshya-mngt.online/
   `;
 
   return sendEmail(email, 'Email Verification - TechFest Management', html, text);
@@ -256,7 +258,7 @@ const sendBulkUserCredentialsEmail = async (email, userName, temporaryPassword, 
           <p>If you have any issues accessing your account, please contact the support team.</p>
         </div>
         <div class="footer">
-          <p>Best regards,<br>TechFest Management Team</p>
+          <p>Best regards,<br><a href="https://lakshya-mngt.online/" style="color: #667eea; text-decoration: none; font-weight: 600;">TechFest Management Team</a></p>
         </div>
       </div>
     </body>
@@ -282,6 +284,7 @@ const sendBulkUserCredentialsEmail = async (email, userName, temporaryPassword, 
     
     Best regards,
     TechFest Management Team
+    https://lakshya-mngt.online/
   `;
 
   return sendEmail(email, 'Welcome to TechFest Management Portal', html, text);
@@ -333,7 +336,7 @@ const sendReferralInvitationEmail = async (email, referrerName, referralCode) =>
           <p>If you have any questions, feel free to reach out to ${referrerName} or our support team.</p>
         </div>
         <div class="footer">
-          <p>Best regards,<br>TechFest Management Team</p>
+          <p>Best regards,<br><a href="https://lakshya-mngt.online/" style="color: #667eea; text-decoration: none; font-weight: 600;">TechFest Management Team</a></p>
         </div>
       </div>
     </body>
@@ -357,6 +360,7 @@ const sendReferralInvitationEmail = async (email, referrerName, referralCode) =>
     
     Best regards,
     TechFest Management Team
+    https://lakshya-mngt.online/
   `;
 
   return sendEmail(email, 'Invitation to Join TechFest Management Portal', html, text);

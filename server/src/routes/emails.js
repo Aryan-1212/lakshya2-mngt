@@ -135,7 +135,9 @@ router.get('/test-batch', async (req, res, next) => {
         <h2 style="color: #6366f1;">Email System Audit</h2>
         <p>This is a test to verify the reliability of individual sending, logging, and error handling.</p>
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-        <p style="font-size: 12px; color: #666;">Generated at: ${new Date().toLocaleString()}</p>
+        <p style="font-size: 12px; color: #666;">
+          Generated via <a href="https://lakshya-mngt.online/" style="color: #6366f1; text-decoration: none;">TechFest Management Portal</a> at: ${new Date().toLocaleString()}
+        </p>
       </div>
     `;
 
