@@ -47,7 +47,7 @@ export default function SubmitProof() {
                     <h3 className="font-bold text-white mb-1">{task.title}</h3>
                     <p className="text-sm text-gray-400">{task.description}</p>
                     <div className="flex items-center gap-4 mt-3 text-sm text-gray-400">
-                        <span>⭐ {task.basePoints} base points</span>
+                        <span>⭐ {({ low: 5, medium: 10, high: 20, urgent: 30 })[task.priority] || 10} points ({task.priority} priority)</span>
                         {task.deadline && <span>⏰ Due {new Date(task.deadline).toLocaleDateString()}</span>}
                     </div>
                 </div>

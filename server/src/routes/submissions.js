@@ -363,13 +363,16 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
+// Priority-based points mapping (hardcoded, not overridable)
+const PRIORITY_POINTS = { low: 5, medium: 10, high: 20, urgent: 30 };
+
 // PUT /api/submissions/:id/verify — TL or Admin verifies
 router.put('/:id/verify', requireRole('admin', 'teamleader'), validate(verifySubmissionSchema), async (req, res, next) => {
   try {
     const sub = await Submission.findById(req.params.id).populate({
       path: 'taskId',
       populate: { path: 'teamId', select: '_id' },
-      select: 'title teamId basePoints status assignees',
+      select: 'title teamId basePoints status assignees priority',
     });
     if (!sub) return res.status(404).json({ success: false, message: 'Submission not found' });
 
@@ -378,10 +381,13 @@ router.put('/:id/verify', requireRole('admin', 'teamleader'), validate(verifySub
       return res.status(403).json({ success: false, message: 'You can only verify your team submissions' });
     }
 
-    const { awardedPoints, status, rejectionReason } = req.body;
+    const { status, rejectionReason } = req.body;
+
+    // Auto-derive points from task priority — not from request body
+    const autoPoints = PRIORITY_POINTS[sub.taskId.priority] || 10;
 
     sub.status = status;
-    sub.awardedPoints = status === 'verified' ? awardedPoints : 0;
+    sub.awardedPoints = status === 'verified' ? autoPoints : 0;
     sub.verifiedBy = req.user.id;
     sub.verifiedAt = new Date();
     sub.rejectionReason = rejectionReason || null;
@@ -399,7 +405,7 @@ router.put('/:id/verify', requireRole('admin', 'teamleader'), validate(verifySub
           userId: sub.submittedBy,
           taskId: sub.taskId._id,
           submissionId: sub._id,
-          points: awardedPoints,
+          points: autoPoints,
           type: 'earned',
           reason: `Verified by ${req.user.name || req.user.email}`,
           createdBy: req.user.id,

@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 
 const STATUS_MAP = { open: { label: 'Open', class: 'badge-primary' }, submitted: { label: 'Submitted', class: 'badge-warning' }, verified: { label: 'Verified', class: 'badge-success' }, rejected: { label: 'Rejected', class: 'badge-danger' } }
 const PRIORITY_MAP = { low: '🔵', medium: '🟡', high: '🟠', urgent: '🔴' }
+const PRIORITY_POINTS = { low: 5, medium: 10, high: 20, urgent: 30 }
 
 export default function MyTasks() {
     const navigate = useNavigate()
@@ -36,7 +37,7 @@ export default function MyTasks() {
                                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                                         <h3 className="font-bold text-white">{task.title}</h3>
                                         <span className={STATUS_MAP[task.status]?.class}>{STATUS_MAP[task.status]?.label}</span>
-                                        <span className="badge-primary">{task.basePoints} pts</span>
+                                        <span className="badge-primary">{PRIORITY_POINTS[task.priority] || 10} pts</span>
                                     </div>
                                     <p className="text-sm text-gray-400 mb-2 line-clamp-2">{task.description}</p>
                                     <div className="flex items-center gap-4 text-xs text-gray-500">

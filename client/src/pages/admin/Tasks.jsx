@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 
 const STATUS_MAP = { open: { label: 'Open', class: 'badge-primary' }, submitted: { label: 'Submitted', class: 'badge-warning' }, verified: { label: 'Verified', class: 'badge-success' }, rejected: { label: 'Rejected', class: 'badge-danger' }, closed: { label: 'Closed', class: 'bg-gray-500/20 text-gray-400 badge' } }
 const PRIORITY_MAP = { low: { class: 'badge-gray', emoji: '🔵' }, medium: { class: 'badge-primary', emoji: '🟡' }, high: { class: 'badge-warning', emoji: '🟠' }, urgent: { class: 'badge-danger', emoji: '🔴' } }
+const PRIORITY_POINTS = { low: 5, medium: 10, high: 20, urgent: 30 }
 
 function Modal({ open, onClose, title, children }) {
     if (!open) return null
@@ -19,7 +20,7 @@ function TaskForm({ initial, teamId: forcedTeamId, onSubmit, loading }) {
     const { user } = useAuth()
     const { data: teamsData } = useQuery({ queryKey: ['teams'], queryFn: getTeams, enabled: user.role === 'admin' })
     const teams = teamsData?.data?.teams || []
-    const [form, setForm] = useState(initial || { title: '', description: '', teamId: forcedTeamId || '', assignees: [], deadline: '', priority: 'medium', basePoints: 10 })
+    const [form, setForm] = useState(initial || { title: '', description: '', teamId: forcedTeamId || '', assignees: [], deadline: '', priority: 'medium' })
     const selectedTeam = form.teamId
 
     const { data: usersData } = useQuery({
@@ -54,7 +55,9 @@ function TaskForm({ initial, teamId: forcedTeamId, onSubmit, loading }) {
                         {['low', 'medium', 'high', 'urgent'].map((p) => <option key={p} value={p}>{`${PRIORITY_MAP[p].emoji} ${p}`}</option>)}
                     </select>
                 </div>
-                <div><label className="label">Base Points</label><input type="number" className="input" min={0} value={form.basePoints} onChange={f('basePoints')} /></div>
+                <div><label className="label">Points (auto)</label>
+                    <div className="input bg-dark-800 cursor-not-allowed text-primary-400 font-bold">{PRIORITY_POINTS[form.priority] || 10} pts</div>
+                </div>
             </div>
 
             <div><label className="label">Deadline</label><input type="datetime-local" className="input" value={form.deadline ? form.deadline.slice(0, 16) : ''} onChange={f('deadline')} /></div>
@@ -97,7 +100,7 @@ function SubmissionsList({ taskId, basePoints }) {
         onError: (e) => toast.error(e.response?.data?.message || 'Error')
     })
 
-    const [verifyState, setVerifyState] = useState({ id: null, status: 'verified', awardedPoints: basePoints || 0, rejectionReason: '' })
+    const [verifyState, setVerifyState] = useState({ id: null, status: 'verified', rejectionReason: '' })
 
     if (isLoading) return <div className="text-gray-400 text-center py-4"><div className="animate-spin inline-block rounded-full h-6 w-6 border-t-2 border-b-2 border-primary-500 mr-2" /> Loading...</div>
     if (submissions.length === 0) return <div className="text-gray-500 text-center py-4 bg-dark-700 rounded-lg border border-dark-500">No submissions yet for this task.</div>
@@ -125,7 +128,7 @@ function SubmissionsList({ taskId, basePoints }) {
 
                     {sub.status === 'pending' && verifyState.id !== sub._id && (
                         <div className="mt-3 pt-3 border-t border-dark-500">
-                            <button onClick={() => setVerifyState({ id: sub._id, status: 'verified', awardedPoints: basePoints || 0, rejectionReason: '' })} className="btn-primary py-1 px-3 text-xs w-full justify-center">✔️ Review Submission</button>
+                            <button onClick={() => setVerifyState({ id: sub._id, status: 'verified', rejectionReason: '' })} className="btn-primary py-1 px-3 text-xs w-full justify-center">✔️ Review Submission</button>
                         </div>
                     )}
 
@@ -137,7 +140,9 @@ function SubmissionsList({ taskId, basePoints }) {
                             </div>
 
                             {verifyState.status === 'verified' && (
-                                <div><label className="text-xs text-gray-400 block mb-1">Points to Award</label><input type="number" className="input py-1 text-sm" value={verifyState.awardedPoints} onChange={e => setVerifyState(s => ({ ...s, awardedPoints: Number(e.target.value) }))} /></div>
+                                <div className="p-2 rounded bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-400">
+                                    ⭐ <strong>{PRIORITY_POINTS[sub.taskId?.priority] || 10} points</strong> will be awarded automatically
+                                </div>
                             )}
                             {verifyState.status === 'rejected' && (
                                 <div><label className="text-xs text-gray-400 block mb-1">Rejection Reason</label><input type="text" className="input py-1 text-sm" value={verifyState.rejectionReason} onChange={e => setVerifyState(s => ({ ...s, rejectionReason: e.target.value }))} placeholder="Why is this rejected?" /></div>
@@ -145,7 +150,7 @@ function SubmissionsList({ taskId, basePoints }) {
 
                             <div className="flex gap-2">
                                 <button className="btn-secondary py-1 text-xs flex-1" onClick={() => setVerifyState({ id: null })}>Cancel</button>
-                                <button className={`py-1 px-3 text-xs font-bold rounded flex-1 ${verifyState.status === 'verified' ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-red-600 text-white hover:bg-red-500'}`} onClick={() => verifyMut.mutate({ id: sub._id, status: verifyState.status, awardedPoints: verifyState.awardedPoints, rejectionReason: verifyState.rejectionReason })} disabled={verifyMut.isPending}>{verifyMut.isPending ? '⏳...' : 'Confirm'}</button>
+                                <button className={`py-1 px-3 text-xs font-bold rounded flex-1 ${verifyState.status === 'verified' ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-red-600 text-white hover:bg-red-500'}`} onClick={() => verifyMut.mutate({ id: sub._id, status: verifyState.status, rejectionReason: verifyState.rejectionReason })} disabled={verifyMut.isPending}>{verifyMut.isPending ? '⏳...' : 'Confirm'}</button>
                             </div>
                         </div>
                     )}
@@ -209,7 +214,7 @@ export default function AdminTasks() {
                                         <td><span className={`${PRIORITY_MAP[t.priority]?.class || 'badge-gray'} badge`}>{PRIORITY_MAP[t.priority]?.emoji} {t.priority}</span></td>
                                         <td><span className={STATUS_MAP[t.status]?.class}>{STATUS_MAP[t.status]?.label}</span></td>
                                         <td className="text-gray-400 text-xs">{t.deadline ? new Date(t.deadline).toLocaleDateString() : '—'}</td>
-                                        <td className="text-primary-400 font-bold">{t.basePoints}</td>
+                                        <td className="text-primary-400 font-bold">{PRIORITY_POINTS[t.priority] || 10}</td>
                                         <td>
                                             <div className="flex gap-1 flex-wrap">
                                                 <button onClick={() => setModal({ type: 'view-subs', taskId: t._id, taskTitle: t.title, basePoints: t.basePoints })} className="btn-secondary py-1 px-2 text-xs tooltip-trigger" title="View Submissions">👀</button>
@@ -237,7 +242,7 @@ export default function AdminTasks() {
                                         {t.teamId?.name ? <span className="badge-gray text-[10px]">{t.teamId.name}</span> : <span className="text-gray-500 text-xs">—</span>}
                                         <span className={`${PRIORITY_MAP[t.priority]?.class || 'badge-gray'} badge text-[10px]`}>{PRIORITY_MAP[t.priority]?.emoji} {t.priority}</span>
                                         <span className={`${STATUS_MAP[t.status]?.class} text-[10px]`}>{STATUS_MAP[t.status]?.label}</span>
-                                        <span className="text-primary-400 font-bold text-xs ml-auto">{t.basePoints} pts</span>
+                                        <span className="text-primary-400 font-bold text-xs ml-auto">{PRIORITY_POINTS[t.priority] || 10} pts</span>
                                     </div>
                                 </div>
                                 <div className="text-xs text-gray-400 space-y-1">

@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getSubmissions, verifySubmission } from '../../api'
 import toast from 'react-hot-toast'
 
+const PRIORITY_POINTS = { low: 5, medium: 10, high: 20, urgent: 30 }
+
 function Modal({ open, onClose, title, children }) {
     if (!open) return null
     return <div className="modal-overlay" onClick={onClose}><div className="modal" onClick={(e) => e.stopPropagation()}>
@@ -28,7 +30,7 @@ export default function VerifySubmissions() {
         onError: (e) => toast.error(e.response?.data?.message || 'Error'),
     })
 
-    const [verifyForm, setVerifyForm] = useState({ awardedPoints: 0, status: 'verified', rejectionReason: '' })
+    const [verifyForm, setVerifyForm] = useState({ status: 'verified', rejectionReason: '' })
 
     return (
         <div className="space-y-5 animate-fade-in">
@@ -81,7 +83,7 @@ export default function VerifySubmissions() {
                                 </div>
                                 {sub.status === 'pending' && (
                                     <button
-                                        onClick={() => { setModal(sub); setVerifyForm({ awardedPoints: sub.taskId?.basePoints || 10, status: 'verified', rejectionReason: '' }) }}
+                                        onClick={() => { setModal(sub); setVerifyForm({ status: 'verified', rejectionReason: '' }) }}
                                         className="btn-primary py-2 px-3 text-sm flex-shrink-0"
                                     >
                                         ✔️ Review
@@ -99,7 +101,7 @@ export default function VerifySubmissions() {
                     <div className="space-y-4">
                         <div className="p-3 rounded-lg bg-dark-700 border border-dark-500">
                             <p className="text-sm font-medium text-white mb-1">{modal.taskId?.title}</p>
-                            <p className="text-xs text-gray-400">Submitted by {modal.submittedBy?.name} · Base points: {modal.taskId?.basePoints}</p>
+                            <p className="text-xs text-gray-400">Submitted by {modal.submittedBy?.name} · Points: {PRIORITY_POINTS[modal.taskId?.priority] || 10} (auto from {modal.taskId?.priority || 'medium'} priority)</p>
                         </div>
                         <div>
                             <label className="label">Decision</label>
@@ -109,9 +111,8 @@ export default function VerifySubmissions() {
                             </div>
                         </div>
                         {verifyForm.status === 'verified' && (
-                            <div>
-                                <label className="label">Points to Award</label>
-                                <input type="number" className="input" min={0} value={verifyForm.awardedPoints} onChange={(e) => setVerifyForm((f) => ({ ...f, awardedPoints: Number(e.target.value) }))} />
+                            <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-400">
+                                ⭐ <strong>{PRIORITY_POINTS[modal?.taskId?.priority] || 10} points</strong> will be awarded automatically ({modal?.taskId?.priority || 'medium'} priority)
                             </div>
                         )}
                         {verifyForm.status === 'rejected' && (
