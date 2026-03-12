@@ -574,12 +574,25 @@ router.post('/upload', requireRole('admin', 'teamleader'), blockFacultyWrite, up
 });
 
 // DELETE /api/resources/:id
-router.delete('/:id', requireRole('admin', 'teamleader'), blockFacultyWrite, async (req, res, next) => {
+router.delete('/:id', blockFacultyWrite, async (req, res, next) => {
   try {
     const resource = await Resource.findById(req.params.id);
     if (!resource) return res.status(404).json({ success: false, message: 'Resource not found' });
-    if (req.user.role === 'teamleader' && resource.uploadedBy.toString() !== req.user.id) {
-      return res.status(403).json({ success: false, message: 'You can only delete your own resources' });
+    
+    let canDelete = false;
+    if (req.user.role === 'admin') {
+      canDelete = true;
+    } else if (req.user.role === 'teamleader') {
+      const isOwn = resource.uploadedBy.toString() === req.user.id;
+      const isTeam = resource.teamId && req.user.teamId && resource.teamId.toString() === req.user.teamId.toString();
+      canDelete = isOwn || isTeam;
+    } else {
+      // member, core_team, campus_ambassador, etc
+      canDelete = resource.uploadedBy.toString() === req.user.id;
+    }
+
+    if (!canDelete) {
+      return res.status(403).json({ success: false, message: 'You do not have permission to delete this resource' });
     }
 
     // If this is a file resource, also delete it from Cloudinary

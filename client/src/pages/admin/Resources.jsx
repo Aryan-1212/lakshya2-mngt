@@ -232,7 +232,9 @@ export default function AdminResources() {
         <div className="space-y-5 animate-fade-in">
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <h1 className="page-title mb-0">📁 Resources ({total})</h1>
-                <button onClick={() => setModal(true)} className="btn-primary">➕ Add Resource</button>
+                {['admin', 'teamleader'].includes(user?.role) && (
+                    <button onClick={() => setModal(true)} className="btn-primary">➕ Add Resource</button>
+                )}
             </div>
 
             {/* Scope Tabs */}
@@ -299,7 +301,23 @@ export default function AdminResources() {
                                         {r.type === 'text' && <button onClick={() => alert(r.value)} className="btn-secondary py-1 text-xs flex-1 justify-center">👁️ View</button>}
                                     </>
                                 )}
-                                <button onClick={() => { if (window.confirm('Delete?')) deleteMut.mutate(r._id) }} className="btn-danger py-1 px-2 text-xs">🗑️</button>
+                                {(() => {
+                                    let canDelete = false;
+                                    const uId = user?._id;
+                                    const rId = r.uploadedBy?._id || r.uploadedBy;
+                                    if (user?.role === 'admin') canDelete = true;
+                                    else if (user?.role === 'teamleader') {
+                                        const rTeamId = r.teamId?._id || r.teamId;
+                                        const uTeamId = user?.teamId?._id || user?.teamId;
+                                        canDelete = (rId === uId) || (rTeamId && uTeamId && rTeamId === uTeamId);
+                                    } else {
+                                        canDelete = rId === uId;
+                                    }
+                                    if (canDelete) {
+                                        return <button onClick={() => { if (window.confirm('Delete?')) deleteMut.mutate(r._id) }} className="btn-danger py-1 px-2 text-xs">🗑️</button>;
+                                    }
+                                    return null;
+                                })()}
                             </div>
                         </div>
                     ))}
