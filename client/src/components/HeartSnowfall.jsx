@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 function random(min, max) {
     return Math.random() * (max - min) + min
@@ -65,14 +65,8 @@ function playPop() {
 }
 
 /* ── Emoji pools ─────────────────────────────────────────────── */
-const HEART_POOL    = ['♥','🩷','💗','💕','💖','💞','💓','💝','🫀','❣️']
-const SPARKLE_POOL  = ['✦','✿','❀','✸','✺','⁕','⊹','✩']
 const RIBBON_POOL   = ['🎀','🎗️','🎁']
-const CANDY_POOL    = ['🍭','🍬','🍡','🍧','🍰','🧁','🍩','🍪']
-const FLOWER_POOL   = ['🌸','🌺','🌼','💐','🌷','🏵️']
-const BUTTERFLY_POOL= ['🦋','🫧','🪷']
 const STAR_POOL     = ['⭐','🌟','💫','✨','🌠']
-const CLOUD_POOL    = ['🌸','☁️','🌤️']
 
 // Full click burst pool
 const BURST_POOL = ['✦','♡','🌸','✿','💖','🎀','⭐','💫','✨','🩷']
@@ -91,23 +85,6 @@ function ShootingStar({ id, onDone }) {
             style={{ top, left }}
             aria-hidden="true"
         >✨</span>
-    )
-}
-
-/* ── Floating bubble ─────────────────────────────────────────── */
-function FloatingBubble({ bubble }) {
-    return (
-        <span
-            className="pookie-bubble"
-            style={{
-                left: bubble.left,
-                fontSize: bubble.size,
-                animationDuration: bubble.duration,
-                animationDelay: bubble.delay,
-                '--drift-x': bubble.drift,
-            }}
-            aria-hidden="true"
-        >{bubble.symbol}</span>
     )
 }
 
@@ -140,42 +117,6 @@ export default function HeartSnowfall({ active }) {
     const cursorTargetRef = useRef({ x: -200, y: -200 })
     const rafRef = useRef(null)
 
-    /* ── Snowfall elements ──────────────────────────────────── */
-    const hearts = useMemo(() => Array.from({ length: 22 }, (_, i) => ({
-        id: `heart-${i}`,
-        left: `${random(0, 100)}vw`,
-        size: `${random(16, 30)}px`,
-        duration: `${random(6, 13)}s`,
-        delay: `${random(0, 9)}s`,
-        opacity: random(0.4, 0.9),
-        drift: `${random(-70, 70)}px`,
-        symbol: pick(HEART_POOL),
-        rotate: random(-20, 20),
-    })), [active])
-
-    const sparkles = useMemo(() => Array.from({ length: 14 }, (_, i) => ({
-        id: `sparkle-${i}`,
-        left: `${random(0, 100)}vw`,
-        size: `${random(8, 18)}px`,
-        duration: `${random(2, 5.5)}s`,
-        delay: `${random(0, 5)}s`,
-        opacity: random(0.5, 1),
-        drift: `${random(-50, 50)}px`,
-        symbol: pick(SPARKLE_POOL),
-    })), [active])
-
-    const extras = useMemo(() => Array.from({ length: 12 }, (_, i) => ({
-        id: `extra-${i}`,
-        left: `${random(0, 100)}vw`,
-        size: `${random(12, 28)}px`,
-        duration: `${random(9, 16)}s`,
-        delay: `${random(0, 12)}s`,
-        opacity: random(0.4, 0.9),
-        drift: `${random(-80, 80)}px`,
-        symbol: pick([...CANDY_POOL, ...FLOWER_POOL, ...BUTTERFLY_POOL, ...RIBBON_POOL]),
-        wobble: Math.random() > 0.5,
-    })), [active])
-
     const twinkles = useMemo(() => Array.from({ length: 12 }, (_, i) => ({
         id: `twinkle-${i}`,
         left: `${random(3, 97)}vw`,
@@ -184,16 +125,6 @@ export default function HeartSnowfall({ active }) {
         duration: `${random(1.5, 5)}s`,
         delay: `${random(0, 4)}s`,
         symbol: pick(STAR_POOL),
-    })), [active])
-
-    const bubbles = useMemo(() => Array.from({ length: 8 }, (_, i) => ({
-        id: `bubble-${i}`,
-        left: `${random(5, 95)}vw`,
-        size: `${random(14, 26)}px`,
-        duration: `${random(7, 15)}s`,
-        delay: `${random(0, 8)}s`,
-        drift: `${random(-40, 40)}px`,
-        symbol: pick([...FLOWER_POOL, '🫧', '🌈']),
     })), [active])
 
     /* ── Entrance animation ─────────────────────────────────── */
@@ -394,60 +325,6 @@ export default function HeartSnowfall({ active }) {
                 <span className="pookie-orb orb-b">🌸</span>
                 <span className="pookie-orb orb-c">✨</span>
 
-                {/* Hearts */}
-                <div className="heart-layer">
-                    {hearts.map((h, i) => (
-                        <span key={h.id}
-                            className={`heart-snowfall-item ${i % 2 === 0 ? 'drift-alt' : ''} ${i % 3 === 0 ? 'wobble' : ''}`}
-                            style={{
-                                left: h.left, top: '-60px',
-                                fontSize: h.size,
-                                animationDuration: h.duration,
-                                animationDelay: h.delay,
-                                opacity: h.opacity,
-                                '--drift-x': h.drift,
-                                '--rotate': `${h.rotate}deg`,
-                            }}>
-                            {h.symbol}
-                        </span>
-                    ))}
-                </div>
-
-                {/* Sparkles */}
-                <div className="sparkle-layer">
-                    {sparkles.map(s => (
-                        <span key={s.id} className="sparkle-snowfall-item"
-                            style={{
-                                left: s.left, top: '-40px',
-                                fontSize: s.size,
-                                animationDuration: s.duration,
-                                animationDelay: s.delay,
-                                opacity: s.opacity,
-                                '--drift-x': s.drift,
-                            }}>
-                            {s.symbol}
-                        </span>
-                    ))}
-                </div>
-
-                {/* NEW: extras — candy, flowers, butterflies, ribbons */}
-                <div className="extras-layer">
-                    {extras.map(e => (
-                        <span key={e.id}
-                            className={`extras-snowfall-item ${e.wobble ? 'wobble' : ''}`}
-                            style={{
-                                left: e.left, top: '-50px',
-                                fontSize: e.size,
-                                animationDuration: e.duration,
-                                animationDelay: e.delay,
-                                opacity: e.opacity,
-                                '--drift-x': e.drift,
-                            }}>
-                            {e.symbol}
-                        </span>
-                    ))}
-                </div>
-
                 {/* Twinkle stars (fixed position, pulse only) */}
                 <div className="twinkle-layer">
                     {twinkles.map(s => (
@@ -461,11 +338,6 @@ export default function HeartSnowfall({ active }) {
                             {s.symbol}
                         </span>
                     ))}
-                </div>
-
-                {/* NEW: rising bubbles (float upward) */}
-                <div className="bubbles-layer">
-                    {bubbles.map(b => <FloatingBubble key={b.id} bubble={b} />)}
                 </div>
 
                 {/* NEW: shooting stars */}
