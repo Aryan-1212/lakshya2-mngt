@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { getTask, submitProof, submitFileProof } from '../../api'
 import toast from 'react-hot-toast'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 export default function SubmitProof() {
     const { taskId } = useParams()
@@ -45,7 +47,9 @@ export default function SubmitProof() {
             {task && (
                 <div className="card mb-5 border-l-4 border-l-primary-500">
                     <h3 className="font-bold text-white mb-1">{task.title}</h3>
-                    <p className="text-sm text-gray-400">{task.description}</p>
+                    <div className="markdown-content text-sm mt-2">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" /> }}>{task.description}</ReactMarkdown>
+                    </div>
                     <div className="flex items-center gap-4 mt-3 text-sm text-gray-400">
                         <span>⭐ {({ low: 5, medium: 10, high: 20, urgent: 30 })[task.priority] || 10} points ({task.priority} priority)</span>
                         {task.deadline && <span>⏰ Due {new Date(task.deadline).toLocaleDateString()}</span>}

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, getTeams } from '../../api'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import toast from 'react-hot-toast'
 import { useAuth } from '../../context/AuthContext'
 
@@ -140,7 +141,7 @@ export default function AdminAnnouncements() {
                                         {ann.sendEmail && <span className="badge bg-blue-500/20 text-blue-400 text-xs">📧 Emailed</span>}
                                     </div>
                                     <div className="text-sm text-gray-400 prose prose-invert max-w-none line-clamp-2 break-words">
-                                        <ReactMarkdown>{ann.body}</ReactMarkdown>
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" /> }}>{ann.body}</ReactMarkdown>
                                     </div>
                                     <p className="text-xs text-gray-500 mt-2">by {ann.createdBy?.name} · {new Date(ann.createdAt).toLocaleString()}</p>
                                 </div>

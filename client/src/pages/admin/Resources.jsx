@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '../../context/AuthContext'
 import { getResources, createResource, uploadResource, deleteResource, getTeams } from '../../api'
 import toast from 'react-hot-toast'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const TYPE_ICON = { file: '📄', link: '🔗', text: '📝' }
 const TYPE_BADGE = { file: 'badge-primary', link: 'badge-success', text: 'badge-warning' }
@@ -91,7 +93,18 @@ function ResourceForm({ onSubmit, loading }) {
                 </div>
             </div>
             <div><label className="label">Title *</label><input className="input" value={form.title} onChange={f('title')} required /></div>
-            <div><label className="label">Description</label><textarea className="input" rows={2} value={form.description} onChange={f('description')} /></div>
+            <div>
+                <label className="label">Description (Markdown supported)</label>
+                <textarea className="input" rows={3} value={form.description} onChange={f('description')} />
+                {form.description && (
+                    <div className="mt-2 p-3 bg-dark-900 rounded-lg border border-dark-600">
+                        <label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold block mb-2">Live Preview</label>
+                        <div className="markdown-content text-sm">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" /> }}>{form.description}</ReactMarkdown>
+                        </div>
+                    </div>
+                )}
+            </div>
             <div><label className="label">Tags (comma-separated)</label><input className="input" value={form.tags} onChange={f('tags')} placeholder="design, template, official" /></div>
 
             {type === 'file' ? (
@@ -288,7 +301,11 @@ export default function AdminResources() {
                                     </div>
                                 </div>
                             </div>
-                            {r.description && <p className="text-sm text-gray-400 mb-2 line-clamp-2">{r.description}</p>}
+                            {r.description && (
+                                <div className="markdown-content text-sm mb-2 line-clamp-3 overflow-hidden">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" /> }}>{r.description}</ReactMarkdown>
+                                </div>
+                            )}
                             {r.tags?.length > 0 && <div className="flex flex-wrap gap-1 mb-2">{r.tags.map((tag) => <span key={tag} className="badge-gray text-xs">#{tag}</span>)}</div>}
                             <div className="flex gap-2 mt-auto pt-2 border-t border-dark-500">
                                 {r.category === 'private' ? (

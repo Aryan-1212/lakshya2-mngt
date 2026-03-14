@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getTasks, createTask, updateTask, deleteTask, getTeams, getUsers, getSubmissions, verifySubmission, closeTask } from '../../api'
 import { useAuth } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const STATUS_MAP = { open: { label: 'Open', class: 'badge-primary' }, submitted: { label: 'Submitted', class: 'badge-warning' }, verified: { label: 'Verified', class: 'badge-success' }, rejected: { label: 'Rejected', class: 'badge-danger' }, closed: { label: 'Closed', class: 'bg-gray-500/20 text-gray-400 badge' } }
 const PRIORITY_MAP = { low: { class: 'badge-gray', emoji: '🔵' }, medium: { class: 'badge-primary', emoji: '🟡' }, high: { class: 'badge-warning', emoji: '🟠' }, urgent: { class: 'badge-danger', emoji: '🔴' } }
@@ -38,7 +40,18 @@ function TaskForm({ initial, teamId: forcedTeamId, onSubmit, loading }) {
     return (
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(form) }} className="space-y-4">
             <div><label className="label">Title *</label><input className="input" value={form.title} onChange={f('title')} required /></div>
-            <div><label className="label">Description</label><textarea className="input" rows={3} value={form.description} onChange={f('description')} /></div>
+            <div>
+                <label className="label">Description (Markdown supported)</label>
+                <textarea className="input" rows={5} value={form.description} onChange={f('description')} />
+                {form.description && (
+                    <div className="mt-2 p-3 bg-dark-900 rounded-lg border border-dark-600">
+                        <label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold block mb-2">Live Preview</label>
+                        <div className="markdown-content text-sm">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" /> }}>{form.description}</ReactMarkdown>
+                        </div>
+                    </div>
+                )}
+            </div>
 
             {user.role === 'admin' && (
                 <div><label className="label">Team *</label>
@@ -118,7 +131,11 @@ function SubmissionsList({ taskId, basePoints }) {
                         {sub.status === 'rejected' && <span className="badge-danger text-xs">❌ Rejected</span>}
                         {sub.status === 'pending' && <span className="badge-warning text-xs">⏳ Pending</span>}
                     </div>
-                    {sub.note && <p className="text-xs text-gray-300 italic mb-2">"{sub.note}"</p>}
+                    {sub.note && (
+                        <div className="markdown-content text-xs italic mb-2 opacity-80 border-l-2 border-dark-600 pl-2">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" /> }}>{sub.note}</ReactMarkdown>
+                        </div>
+                    )}
                     <div className="flex gap-2">
                         {sub.proofType === 'link' && <a href={sub.proofValue} target="_blank" rel="noreferrer" className="btn-secondary py-1 px-2 text-xs">🔗 Link</a>}
                         {sub.proofType === 'file' && <a href={sub.proofValue} target="_blank" rel="noreferrer" className="btn-secondary py-1 px-2 text-xs">📄 File</a>}

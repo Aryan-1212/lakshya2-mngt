@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getTasks } from '../../api'
 import { useNavigate } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 const STATUS_MAP = { open: { label: 'Open', class: 'badge-primary' }, submitted: { label: 'Submitted', class: 'badge-warning' }, verified: { label: 'Verified', class: 'badge-success' }, rejected: { label: 'Rejected', class: 'badge-danger' } }
 const PRIORITY_MAP = { low: '🔵', medium: '🟡', high: '🟠', urgent: '🔴' }
@@ -39,7 +41,9 @@ export default function MyTasks() {
                                         <span className={STATUS_MAP[task.status]?.class}>{STATUS_MAP[task.status]?.label}</span>
                                         <span className="badge-primary">{PRIORITY_POINTS[task.priority] || 10} pts</span>
                                     </div>
-                                    <p className="text-sm text-gray-400 mb-2 line-clamp-2">{task.description}</p>
+                                    <div className="markdown-content text-sm mb-2 line-clamp-2 overflow-hidden">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={{ a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" /> }}>{task.description}</ReactMarkdown>
+                                    </div>
                                     <div className="flex items-center gap-4 text-xs text-gray-500">
                                         <span>🏷️ {task.teamId?.name}</span>
                                         {task.deadline && <span>⏰ Due {new Date(task.deadline).toLocaleDateString()}</span>}
