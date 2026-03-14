@@ -66,7 +66,7 @@ function playPop() {
 
 /* ── Emoji pools ─────────────────────────────────────────────── */
 const RIBBON_POOL   = ['🎀','🎗️','🎁']
-const STAR_POOL     = ['⭐','🌟','💫','✨','🌠']
+const STAR_POOL     = ['⭐','🌟','💫','✨']
 
 // Full click burst pool
 const BURST_POOL = ['✦','♡','🌸','✿','💖','🎀','⭐','💫','✨','🩷']
@@ -116,6 +116,15 @@ export default function HeartSnowfall({ active }) {
     const shootTimerRef = useRef(null)
     const cursorTargetRef = useRef({ x: -200, y: -200 })
     const rafRef = useRef(null)
+
+    // Detect mobile viewport
+    const [isMobile, setIsMobile] = useState(false)
+    useEffect(() => {
+        const check = () => setIsMobile(window.innerWidth <= 768)
+        check()
+        window.addEventListener('resize', check)
+        return () => window.removeEventListener('resize', check)
+    }, [])
 
     const twinkles = useMemo(() => Array.from({ length: 12 }, (_, i) => ({
         id: `twinkle-${i}`,
@@ -321,12 +330,16 @@ export default function HeartSnowfall({ active }) {
             <div className={`heart-snowfall ${reducedMotion ? 'reduce-motion' : ''}`} aria-hidden="true">
                 <div className="pookie-ambient-gradient" />
                 <div className="pookie-vignette" />
-                <span className="pookie-orb orb-a">🩷</span>
-                <span className="pookie-orb orb-b">🌸</span>
-                <span className="pookie-orb orb-c">✨</span>
+               {!isMobile && (
+                    <>
+                        <span className="pookie-orb orb-a">🩷</span>
+                        <span className="pookie-orb orb-b">🌸</span>
+                        <span className="pookie-orb orb-c">✨</span>
+                    </>
+                )}
 
                 {/* Twinkle stars (fixed position, pulse only) */}
-                <div className="twinkle-layer">
+                {/* <div className="twinkle-layer">
                     {twinkles.map(s => (
                         <span key={s.id} className="twinkle-star"
                             style={{
@@ -338,7 +351,7 @@ export default function HeartSnowfall({ active }) {
                             {s.symbol}
                         </span>
                     ))}
-                </div>
+                </div> */}
 
                 {/* NEW: shooting stars */}
                 {shootingStars.map(id => (
