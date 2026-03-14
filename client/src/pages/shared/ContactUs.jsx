@@ -26,7 +26,7 @@ export default function ContactUs() {
                             {/* Decorative top bar in team color */}
                             <div
                                 className="absolute top-0 left-0 right-0 h-1 rounded-t-xl"
-                                style={{ background: contact.teamColor || '#6366f1' }}
+                                style={{ background: contact.teamColor || 'var(--accent-primary)' }}
                             />
 
                             <div className="pt-2">
@@ -34,7 +34,10 @@ export default function ContactUs() {
                                 <div className="flex items-center gap-2 mb-4">
                                     <div
                                         className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                                        style={{ background: `${contact.teamColor || '#6366f1'}30`, color: contact.teamColor || '#6366f1' }}
+                                        style={{
+                                            background: contact.teamColor ? `${contact.teamColor}30` : 'var(--accent-soft)',
+                                            color: contact.teamColor || 'var(--accent-primary)'
+                                        }}
                                     >
                                         {contact.teamName?.[0]?.toUpperCase()}
                                     </div>

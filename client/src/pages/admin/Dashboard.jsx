@@ -2,7 +2,17 @@ import { useQuery } from '@tanstack/react-query'
 import { getAdminDashboard } from '../../api'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts'
 
-const STATUS_COLORS = { open: '#6366f1', submitted: '#f59e0b', verified: '#10b981', rejected: '#ef4444' }
+const STATUS_COLORS = { open: 'var(--accent-primary)', submitted: '#fbbf24', verified: '#4ade80', rejected: '#f87171' }
+const CHART_THEME = {
+    tick: { fill: 'var(--color-text-secondary)', fontSize: 11 },
+    tooltip: {
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: '8px',
+        color: 'var(--color-text-primary)',
+    },
+    accent: 'var(--color-accent)',
+}
 
 function StatCard({ icon, label, value, color }) {
     return (
@@ -51,10 +61,10 @@ export default function AdminDashboard() {
                             <PieChart>
                                 <Pie data={taskStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${name}: ${value}`}>
                                     {taskStatusData.map((entry, i) => (
-                                        <Cell key={i} fill={STATUS_COLORS[entry.name] || '#6366f1'} />
+                                        <Cell key={i} fill={STATUS_COLORS[entry.name] || 'var(--accent-primary)'} />
                                     ))}
                                 </Pie>
-                                <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid #2d3a5a', borderRadius: '8px', color: '#f1f5f9' }} />
+                                <Tooltip contentStyle={CHART_THEME.tooltip} />
                             </PieChart>
                         </ResponsiveContainer>
                     ) : <p className="text-gray-500 text-sm">No task data</p>}
@@ -66,10 +76,10 @@ export default function AdminDashboard() {
                     {teamPointsData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={220}>
                             <BarChart data={teamPointsData}>
-                                <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                                <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                                <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid #2d3a5a', borderRadius: '8px', color: '#f1f5f9' }} />
-                                <Bar dataKey="points" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                                <XAxis dataKey="name" tick={CHART_THEME.tick} />
+                                <YAxis tick={CHART_THEME.tick} />
+                                <Tooltip contentStyle={CHART_THEME.tooltip} />
+                                <Bar dataKey="points" fill={CHART_THEME.accent} radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     ) : <p className="text-gray-500 text-sm">No points data yet</p>}

@@ -141,14 +141,14 @@ export default function Profile() {
                                 <div className="space-y-2 mt-2">
                                     {user?.teamId && (
                                         <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: user.teamId.color || '#6366f1' }} />
+                                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: user.teamId.color || 'var(--accent-primary)' }} />
                                             <p className="text-sm font-medium text-white">{user.teamId.name} <span className="text-[10px] text-primary-400 font-bold ml-1">(ACTIVE)</span></p>
                                         </div>
                                     )}
                                     {user?.role === 'teamleader' && user?.managedTeams?.map(t => (
                                         t._id !== user.teamId?._id && (
                                             <div key={t._id} className="flex items-center gap-2 opacity-60">
-                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: t.color || '#6366f1' }} />
+                                                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: t.color || 'var(--accent-primary)' }} />
                                                 <p className="text-sm font-medium text-gray-300">{t.name}</p>
                                             </div>
                                         )

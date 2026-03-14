@@ -3,6 +3,17 @@ import { getTLDashboard } from '../../api'
 import { useAuth } from '../../context/AuthContext'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
+const CHART_THEME = {
+    tick: { fill: 'var(--color-text-secondary)', fontSize: 12 },
+    tooltip: {
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: '8px',
+        color: 'var(--color-text-primary)',
+    },
+    accent: 'var(--color-accent)',
+}
+
 function StatCard({ icon, label, value, color }) {
     return (
         <div className="stat-card">
@@ -41,10 +52,10 @@ export default function TLDashboard() {
                     <h2 className="section-title">Task Status</h2>
                     <ResponsiveContainer width="100%" height={180}>
                         <BarChart data={taskData}>
-                            <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                            <YAxis tick={{ fill: '#9ca3af', fontSize: 12 }} />
-                            <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid #2d3a5a', borderRadius: '8px', color: '#f1f5f9' }} />
-                            <Bar dataKey="count" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                            <XAxis dataKey="name" tick={CHART_THEME.tick} />
+                            <YAxis tick={CHART_THEME.tick} />
+                            <Tooltip contentStyle={CHART_THEME.tooltip} />
+                            <Bar dataKey="count" fill={CHART_THEME.accent} radius={[4, 4, 0, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>

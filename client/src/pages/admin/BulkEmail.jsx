@@ -15,7 +15,7 @@ const TEMPLATES = [
     { id: 'success', name: 'Success / Announcement', icon: '✅', color: 'emerald', theme: '#10b981' },
     { id: 'congrats', name: 'Congratulations', icon: '🏆', color: 'amber', theme: '#f59e0b' },
     { id: 'warning', name: 'Important Warning', icon: '⚠️', color: 'rose', theme: '#f43f5e' },
-    { id: 'formal', name: 'Formal Notification', icon: '👔', color: 'indigo', theme: '#6366f1' },
+    { id: 'formal', name: 'Formal Notification', icon: '👔', color: 'rose', theme: '#db2777' },
 ]
 
 export default function BulkEmail() {
@@ -112,7 +112,7 @@ export default function BulkEmail() {
                     </div>
                 </div>
                 <div style="background-color: #f3f4f6; padding: 16px 24px; text-align: center; color: #9ca3af; font-size: 12px;">
-                    This is an automated notification from the <a href="https://lakshya-mngt.online/" style="color: #6366f1; text-decoration: none; font-weight: 600;">Technical Management Portal</a>.<br>
+                    This is an automated notification from the <a href="https://lakshya-mngt.online/" style="color: #db2777; text-decoration: none; font-weight: 600;">Technical Management Portal</a>.<br>
                     &copy; 2026 TechFest Organization. All rights reserved.
                 </div>
             </div>
@@ -188,7 +188,7 @@ export default function BulkEmail() {
                                     onClick={() => toggleTeam(team._id)}
                                     className={`w-full flex items-center gap-3 p-2.5 rounded-lg border transition-all text-left text-xs ${form.teams.includes(team._id) ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'bg-dark-700 border-dark-600 text-gray-400 hover:border-dark-400'}`}
                                 >
-                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: team.color || '#6366f1' }} />
+                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: team.color || 'var(--accent-primary)' }} />
                                     <span className="truncate font-medium">{team.name}</span>
                                     {form.teams.includes(team._id) && <span className="ml-auto text-[10px]">✓</span>}
                                 </button>

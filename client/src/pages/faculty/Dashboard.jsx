@@ -2,7 +2,16 @@ import { useQuery } from '@tanstack/react-query'
 import { getFacultyDashboard } from '../../api'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
-const COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444']
+const COLORS = ['var(--accent-primary)', 'var(--accent-secondary)', '#fbcfe8', '#4ade80', '#fbbf24', '#f87171']
+const CHART_THEME = {
+    tick: { fill: 'var(--color-text-secondary)' },
+    tooltip: {
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-border)',
+        borderRadius: '8px',
+        color: 'var(--color-text-primary)',
+    },
+}
 
 export default function FacultyDashboard() {
     const { data, isLoading } = useQuery({ queryKey: ['facultyDashboard'], queryFn: getFacultyDashboard })
@@ -26,9 +35,9 @@ export default function FacultyDashboard() {
                     {teamsData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={220}>
                             <BarChart data={teamsData}>
-                                <XAxis dataKey="name" tick={{ fill: '#9ca3af', fontSize: 10 }} />
-                                <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} />
-                                <Tooltip contentStyle={{ background: '#1a1a2e', border: '1px solid #2d3a5a', borderRadius: '8px', color: '#f1f5f9' }} />
+                                <XAxis dataKey="name" tick={{ ...CHART_THEME.tick, fontSize: 10 }} />
+                                <YAxis tick={{ ...CHART_THEME.tick, fontSize: 11 }} />
+                                <Tooltip contentStyle={CHART_THEME.tooltip} />
                                 <Bar dataKey="points" radius={[4, 4, 0, 0]}>
                                     {teamsData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                                 </Bar>

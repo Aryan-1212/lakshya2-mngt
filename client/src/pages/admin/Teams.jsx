@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getTeams, createTeam, updateTeam, deleteTeam, getUsers } from '../../api'
 import toast from 'react-hot-toast'
 
-const TEAM_COLORS = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444', '#06b6d4', '#f97316']
+const TEAM_COLORS = ['#db2777', '#c084fc', '#fbbf24', '#4ade80', '#f87171', '#fbcfe8', '#06b6d4', '#f97316']
 
 function Modal({ open, onClose, title, children }) {
     if (!open) return null
@@ -16,7 +16,7 @@ function Modal({ open, onClose, title, children }) {
 function TeamForm({ initial, onSubmit, loading }) {
     const { data: usersData } = useQuery({ queryKey: ['users-all'], queryFn: () => getUsers({ limit: 200 }) })
     const tls = usersData?.data?.users || []
-    const [form, setForm] = useState(initial || { name: '', description: '', teamLeads: [], color: '#6366f1' })
+    const [form, setForm] = useState(initial || { name: '', description: '', teamLeads: [], color: '#db2777' })
     const f = (k) => (v) => setForm((s) => ({ ...s, [k]: typeof v === 'object' ? v.target.value : v }))
 
     return (
