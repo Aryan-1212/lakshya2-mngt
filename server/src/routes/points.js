@@ -120,11 +120,57 @@ router.post('/override', requireRole('admin'), validate(pointsOverrideSchema), a
 // GET /api/points/my — self ledger shortcut
 router.get('/my', async (req, res, next) => {
   try {
-    const ledger = await PointsLedger.find({ userId: req.user.id })
+    const userId = req.user.id;
+    
+    // 1. Fetch points ledger entries
+    const ledger = await PointsLedger.find({ userId })
       .populate('taskId', 'title')
       .sort({ createdAt: -1 });
-    const total = ledger.reduce((sum, e) => sum + e.points, 0);
-    res.json({ success: true, ledger, totalPoints: total });
+    const totalPoints = ledger.reduce((sum, e) => sum + e.points, 0);
+
+    // 2. Fetch completed tasks count (verified submissions)
+    const { Submission } = require('../models/Submission');
+    const tasksCompleted = await Submission.countDocuments({
+      submittedBy: userId,
+      status: 'verified'
+    });
+
+    // 3. Calculate leaderboard rank
+    const leaderboardPipeline = [
+      {
+        $match: {
+          role: { $in: ['volunteer', 'member', 'campus_ambassador'] },
+          isActive: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'pointsledgers',
+          localField: '_id',
+          foreignField: 'userId',
+          as: 'pointsEntries',
+        },
+      },
+      {
+        $addFields: {
+          totalPoints: { $sum: '$pointsEntries.points' },
+        },
+      },
+      { $sort: { totalPoints: -1 } },
+      { $project: { _id: 1, totalPoints: 1 } }
+    ];
+
+    const rankedUsers = await User.aggregate(leaderboardPipeline);
+    const userRankIndex = rankedUsers.findIndex(u => u._id.toString() === userId);
+    const leaderboardRank = userRankIndex !== -1 ? userRankIndex + 1 : null;
+
+    res.json({ 
+      success: true, 
+      ledger, 
+      totalPoints, 
+      tasksCompleted, 
+      leaderboardRank 
+    });
   } catch (err) {
     next(err);
   }
