@@ -335,7 +335,7 @@ router.get('/', async (req, res, next) => {
 
     const [submissions, total] = await Promise.all([
       Submission.find(filter)
-        .populate({ path: 'taskId', populate: { path: 'teamId', select: 'name _id' }, select: 'title teamId basePoints' })
+        .populate({ path: 'taskId', populate: { path: 'teamId', select: 'name _id' }, select: 'title teamId basePoints priority' })
         .populate('submittedBy', 'name email role')
         .populate('verifiedBy', 'name')
         .sort({ createdAt: -1 })
@@ -354,7 +354,7 @@ router.get('/', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
   try {
     const sub = await Submission.findById(req.params.id)
-      .populate({ path: 'taskId', populate: { path: 'teamId', select: 'name _id' }, select: 'title teamId basePoints assignees' })
+      .populate({ path: 'taskId', populate: { path: 'teamId', select: 'name _id' }, select: 'title teamId basePoints assignees priority' })
       .populate('submittedBy', 'name email role')
       .populate('verifiedBy', 'name');
 
