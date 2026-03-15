@@ -38,7 +38,7 @@ export default function AdminDashboard() {
     return (
         <div className="space-y-6 animate-fade-in">
             <div>
-                <h1 className="page-title"><span className='mr-2'>📊</span> Admin Dashboard</h1>
+                <h1 className="page-title"><span className='font-trans'>📊</span> Admin Dashboard</h1>
                 <p className="text-gray-400 text-sm -mt-4">Overview of all teams, tasks, and activity</p>
             </div>
 
