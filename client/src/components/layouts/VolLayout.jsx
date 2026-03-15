@@ -1,4 +1,5 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from '../Sidebar'
 import { useAuth } from '../../context/AuthContext'
 import TopNavbar from '../TopNavbar'
@@ -19,6 +20,7 @@ const BASE_VOL_LINKS = [
 const CA_LINK = { to: '/vol/referrals', label: 'My Referrals', icon: '🎟️' }
 
 export default function VolLayout() {
+    const location = useLocation()
     const { user } = useAuth()
     const isCA = user?.role === 'campus_ambassador'
     const links = isCA
@@ -30,7 +32,17 @@ export default function VolLayout() {
             <Sidebar links={links} title={isCA ? 'CA Portal' : 'Member Portal'} />
             <main className="flex-1 min-w-0 ml-0 lg:ml-[var(--sidebar-width)] p-4 lg:p-6 pt-16 lg:pt-6 min-h-screen bg-app-main text-app-primary">
                 <TopNavbar title={isCA ? 'CA Portal' : 'Member Portal'} />
-                <Outlet />
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={location.pathname}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <Outlet />
+                    </motion.div>
+                </AnimatePresence>
             </main>
         </div>
     )

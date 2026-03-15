@@ -1,4 +1,5 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from '../Sidebar'
 import TopNavbar from '../TopNavbar'
 
@@ -20,12 +21,23 @@ const ADMIN_LINKS = [
 ]
 
 export default function AdminLayout() {
+    const location = useLocation()
     return (
         <div className="flex min-h-screen">
             <Sidebar links={ADMIN_LINKS} title="Admin Portal" />
             <main className="flex-1 min-w-0 ml-0 lg:ml-[var(--sidebar-width)] p-4 lg:p-6 pt-16 lg:pt-6 min-h-screen bg-app-main text-app-primary">
                 <TopNavbar title="Admin Portal" />
-                <Outlet />
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={location.pathname}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <Outlet />
+                    </motion.div>
+                </AnimatePresence>
             </main>
         </div>
     )
