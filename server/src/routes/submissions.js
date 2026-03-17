@@ -395,11 +395,12 @@ router.put('/:id/verify', requireRole('admin', 'teamleader'), validate(verifySub
 
     // Auto-derive points from task priority — not from request body
     const autoPoints = PRIORITY_POINTS[sub.taskId.priority] || 10;
+    const previousStatus = sub.status;
 
     sub.status = status;
     sub.awardedPoints = status === 'verified' ? autoPoints : 0;
-    sub.verifiedBy = req.user.id;
-    sub.verifiedAt = new Date();
+    sub.verifiedBy = status === 'pending' ? null : req.user.id;
+    sub.verifiedAt = status === 'pending' ? null : new Date();
     sub.rejectionReason = rejectionReason || null;
     await sub.save();
 
@@ -421,6 +422,8 @@ router.put('/:id/verify', requireRole('admin', 'teamleader'), validate(verifySub
           createdBy: req.user.id,
         });
       }
+    } else if (previousStatus === 'verified' && status !== 'verified') {
+      await PointsLedger.deleteMany({ submissionId: sub._id });
     }
 
     // Derive overall task status from all submissions for this task

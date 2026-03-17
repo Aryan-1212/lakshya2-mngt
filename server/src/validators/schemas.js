@@ -70,7 +70,7 @@ const submissionSchema = Joi.object({
 
 const verifySubmissionSchema = Joi.object({
   awardedPoints: Joi.number().min(0).optional(), // auto-derived from task priority; kept optional for backwards compat
-  status: Joi.string().valid('verified', 'rejected').required(),
+  status: Joi.string().valid('verified', 'rejected', 'pending').required(),
   rejectionReason: Joi.string().allow('').optional(),
 });
 

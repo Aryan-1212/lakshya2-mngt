@@ -99,6 +99,7 @@ function TaskForm({ initial, teamId: forcedTeamId, onSubmit, loading }) {
 }
 
 function SubmissionsList({ taskId, basePoints }) {
+    const { user } = useAuth()
     const qc = useQueryClient()
     const { data, isLoading } = useQuery({
         queryKey: ['submissions', taskId],
@@ -143,9 +144,11 @@ function SubmissionsList({ taskId, basePoints }) {
                     </div>
                     {sub.rejectionReason && <p className="text-xs text-red-400 mt-2 bg-red-900/20 p-2 rounded border border-red-500/20"><strong>Reason:</strong> {sub.rejectionReason}</p>}
 
-                    {sub.status === 'pending' && verifyState.id !== sub._id && (
+                    {(sub.status === 'pending' || user.role === 'admin') && verifyState.id !== sub._id && (
                         <div className="mt-3 pt-3 border-t border-dark-500">
-                            <button onClick={() => setVerifyState({ id: sub._id, status: 'verified', rejectionReason: '' })} className="btn-primary py-1 px-3 text-xs w-full justify-center">✔️ Review Submission</button>
+                            <button onClick={() => setVerifyState({ id: sub._id, status: sub.status === 'pending' ? 'verified' : sub.status, rejectionReason: sub.rejectionReason || '' })} className="btn-primary py-1 px-3 text-xs w-full justify-center">
+                                {sub.status === 'pending' ? '✔️ Review Submission' : '✏️ Change Decision'}
+                            </button>
                         </div>
                     )}
 
@@ -154,6 +157,9 @@ function SubmissionsList({ taskId, basePoints }) {
                             <div className="flex gap-2">
                                 <button onClick={() => setVerifyState(s => ({ ...s, status: 'verified' }))} className={`flex-1 py-1.5 rounded text-xs font-bold transition-colors ${verifyState.status === 'verified' ? 'bg-emerald-600 text-white' : 'bg-dark-600 text-gray-400'}`}>✅ Verify</button>
                                 <button onClick={() => setVerifyState(s => ({ ...s, status: 'rejected' }))} className={`flex-1 py-1.5 rounded text-xs font-bold transition-colors ${verifyState.status === 'rejected' ? 'bg-red-600 text-white' : 'bg-dark-600 text-gray-400'}`}>❌ Reject</button>
+                                {user.role === 'admin' && (
+                                    <button onClick={() => setVerifyState(s => ({ ...s, status: 'pending', rejectionReason: '' }))} className={`flex-1 py-1.5 rounded text-xs font-bold transition-colors ${verifyState.status === 'pending' ? 'bg-yellow-600 text-white' : 'bg-dark-600 text-gray-400'}`}>⏳ Pending</button>
+                                )}
                             </div>
 
                             {verifyState.status === 'verified' && (
@@ -164,10 +170,15 @@ function SubmissionsList({ taskId, basePoints }) {
                             {verifyState.status === 'rejected' && (
                                 <div><label className="text-xs text-gray-400 block mb-1">Rejection Reason</label><input type="text" className="input py-1 text-sm" value={verifyState.rejectionReason} onChange={e => setVerifyState(s => ({ ...s, rejectionReason: e.target.value }))} placeholder="Why is this rejected?" /></div>
                             )}
+                            {verifyState.status === 'pending' && (
+                                <div className="p-2 rounded bg-yellow-500/10 border border-yellow-500/20 text-xs text-yellow-400">
+                                    ⏳ Submission will be reset to <strong>Pending</strong>. Any previously awarded points will be revoked.
+                                </div>
+                            )}
 
                             <div className="flex gap-2">
                                 <button className="btn-secondary py-1 text-xs flex-1" onClick={() => setVerifyState({ id: null })}>Cancel</button>
-                                <button className={`py-1 px-3 text-xs font-bold rounded flex-1 ${verifyState.status === 'verified' ? 'bg-emerald-600 text-white hover:bg-emerald-500' : 'bg-red-600 text-white hover:bg-red-500'}`} onClick={() => verifyMut.mutate({ id: sub._id, status: verifyState.status, rejectionReason: verifyState.rejectionReason })} disabled={verifyMut.isPending}>{verifyMut.isPending ? '⏳...' : 'Confirm'}</button>
+                                <button className={`py-1 px-3 text-xs font-bold rounded flex-1 ${verifyState.status === 'verified' ? 'bg-emerald-600 text-white hover:bg-emerald-500' : verifyState.status === 'rejected' ? 'bg-red-600 text-white hover:bg-red-500' : 'bg-yellow-600 text-white hover:bg-yellow-500'}`} onClick={() => verifyMut.mutate({ id: sub._id, status: verifyState.status, rejectionReason: verifyState.rejectionReason })} disabled={verifyMut.isPending}>{verifyMut.isPending ? '⏳...' : 'Confirm'}</button>
                             </div>
                         </div>
                     )}
