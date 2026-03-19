@@ -30,7 +30,14 @@ function TaskForm({ initial, teamId: forcedTeamId, onSubmit, loading }) {
         queryFn: () => getUsers({ teamId: selectedTeam, limit: 50 }),
         enabled: !!selectedTeam,
     })
-    const volunteers = (usersData?.data?.users || []).filter(u => u.role !== 'teamleader')
+    
+    // Get all team members including team leaders, avoiding duplicates
+    const allUsers = usersData?.data?.users || []
+    const teamLeader = allUsers.find(u => u.role === 'teamleader')
+    const members = allUsers.filter(u => u.role !== 'teamleader')
+    
+    // Combine for display: team leader first (if exists), then members
+    const assignableUsers = teamLeader ? [teamLeader, ...members] : members
 
     const f = (k) => (v) => setForm((s) => ({ ...s, [k]: typeof v === 'object' ? v.target.value : v }))
     const toggleAssignee = (id) => setForm((s) => ({
@@ -77,10 +84,25 @@ function TaskForm({ initial, teamId: forcedTeamId, onSubmit, loading }) {
 
             {selectedTeam && (
                 <div>
-                    <label className="label">Assignees ({volunteers.length} available)</label>
-                    <div className="max-h-32 overflow-y-auto space-y-1 border border-dark-500 rounded-lg p-2">
-                        {volunteers.length === 0 && <p className="text-gray-500 text-sm p-2">No members in this team</p>}
-                        {volunteers.map((u) => (
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="label mb-0">Assignees ({assignableUsers.length} available)</label>
+                        <div className="flex gap-2">
+                            <button type="button" onClick={() => setForm(s => ({ ...s, assignees: assignableUsers.map(u => u._id) }))} className="text-xs text-primary-400 hover:text-primary-300">Select All</button>
+                            <span className="text-gray-600">|</span>
+                            <button type="button" onClick={() => setForm(s => ({ ...s, assignees: [] }))} className="text-xs text-gray-400 hover:text-gray-300">Clear</button>
+                        </div>
+                    </div>
+                    <div className="max-h-40 overflow-y-auto space-y-1 border border-dark-500 rounded-lg p-2">
+                        {assignableUsers.length === 0 && <p className="text-gray-500 text-sm p-2">No members in this team</p>}
+                        {teamLeader && (
+                            <label className="flex items-center gap-2 px-2 py-2 rounded bg-primary-500/10 border border-primary-500/20 hover:bg-primary-500/20 cursor-pointer">
+                                <input type="checkbox" checked={form.assignees.includes(teamLeader._id)} onChange={() => toggleAssignee(teamLeader._id)} className="rounded accent-primary-500" />
+                                <span className="text-sm font-medium text-primary-300">{teamLeader.name}</span>
+                                <span className="badge-primary text-xs ml-auto font-bold">Team Leader</span>
+                            </label>
+                        )}
+                        {teamLeader && members.length > 0 && <div className="border-t border-dark-600 my-1"></div>}
+                        {members.map((u) => (
                             <label key={u._id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-dark-600 cursor-pointer">
                                 <input type="checkbox" checked={form.assignees.includes(u._id)} onChange={() => toggleAssignee(u._id)} className="rounded" />
                                 <span className="text-sm text-gray-200">{u.name}</span>
@@ -88,6 +110,9 @@ function TaskForm({ initial, teamId: forcedTeamId, onSubmit, loading }) {
                             </label>
                         ))}
                     </div>
+                    {form.assignees.length > 0 && (
+                        <p className="text-xs text-gray-500 mt-1">{form.assignees.length} user(s) selected</p>
+                    )}
                 </div>
             )}
 
