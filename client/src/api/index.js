@@ -53,7 +53,7 @@ export const deleteTask = (id) => api.delete(`/tasks/${id}`)
 export const getSubmissions = (params) => api.get('/submissions', { params })
 export const getSubmission = (id) => api.get(`/submissions/${id}`)
 export const submitProof = (taskId, data) => api.post(`/submissions/${taskId}`, data)
-export const submitFileProof = (taskId, formData) => api.post(`/submissions/${taskId}/file`, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+export const submitFileProof = (taskId, formData) => api.post(`/submissions/${taskId}/file`, formData)
 export const verifySubmission = (id, data) => api.put(`/submissions/${id}/verify`, data)
 
 // Points

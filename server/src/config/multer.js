@@ -122,7 +122,7 @@ const storage = new CloudinaryStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowed = [
+  const allowedMime = [
     'application/pdf',
     'text/csv',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -133,10 +133,13 @@ const fileFilter = (req, file, cb) => {
     'image/webp',
     'text/plain',
   ];
-  if (allowed.includes(file.mimetype)) {
+  const allowedExt = ['pdf', 'csv', 'docx', 'doc', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'txt'];
+  const ext = file.originalname.split('.').pop().toLowerCase();
+
+  if (allowedMime.includes(file.mimetype) || allowedExt.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error(`File type ${file.mimetype} not allowed`), false);
+    cb(new Error(`File type ${file.mimetype} with extension .${ext} not allowed`), false);
   }
 };
 

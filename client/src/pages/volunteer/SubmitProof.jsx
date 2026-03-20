@@ -19,22 +19,26 @@ export default function SubmitProof() {
 
     const submitMut = useMutation({
         mutationFn: (payload) => {
-            if (proofType === 'file') {
+            if (payload.proofType === 'file') {
                 const fd = new FormData()
-                fd.append('proof', file)
-                fd.append('note', note)
+                fd.append('proof', payload.file)
+                fd.append('note', payload.note)
                 return submitFileProof(taskId, fd)
             }
             return submitProof(taskId, payload)
         },
         onSuccess: () => { toast.success('Proof submitted! Awaiting verification.'); navigate('/vol/tasks') },
-        onError: (e) => toast.error(e.response?.data?.message || 'Error submitting'),
+        onError: (e) => {
+            const msg = e.response?.data?.message || e.message || 'Error submitting';
+            toast.error(msg);
+            console.error('Submission failed:', e);
+        },
     })
 
     const handleSubmit = (e) => {
         e.preventDefault()
         if (proofType === 'file' && !file) { toast.error('Please select a file'); return }
-        submitMut.mutate({ proofType, proofValue, note })
+        submitMut.mutate({ proofType, proofValue, note, file })
     }
 
     return (
