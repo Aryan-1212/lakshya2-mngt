@@ -21,7 +21,8 @@ router.get('/', async (req, res, next) => {
 
     let filter = {};
     if (role === 'teamleader') {
-      filter.teamId = teamId;
+      // Team leaders see tasks from their team OR tasks specifically assigned to them
+      filter.$or = [{ teamId: teamId }, { assignees: userId }];
     } else if (role === 'volunteer' || role === 'member' || role === 'campus_ambassador') {
       filter.assignees = userId;
     }
@@ -31,10 +32,18 @@ router.get('/', async (req, res, next) => {
     if (req.query.priority) filter.priority = req.query.priority;
     if (req.query.teamId && role === 'admin') filter.teamId = req.query.teamId;
     if (req.query.search) {
-      filter.$or = [
-        { title: { $regex: req.query.search, $options: 'i' } },
-        { description: { $regex: req.query.search, $options: 'i' } },
-      ];
+      const searchFilter = {
+        $or: [
+          { title: { $regex: req.query.search, $options: 'i' } },
+          { description: { $regex: req.query.search, $options: 'i' } },
+        ],
+      };
+      // If filter already has $or (team leader case), wrap in $and
+      if (filter.$or) {
+        filter = { $and: [{ $or: filter.$or }, searchFilter] };
+      } else {
+        filter.$or = searchFilter.$or;
+      }
     }
 
     const [tasks, total] = await Promise.all([

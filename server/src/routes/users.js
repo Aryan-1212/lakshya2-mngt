@@ -79,6 +79,21 @@ router.post('/bulk-status', requireRole('admin'), async (req, res, next) => {
   }
 });
 
+// GET /api/users/team-leaders — Admin only: get all team leaders with their teams
+router.get('/team-leaders', requireRole('admin'), async (req, res, next) => {
+  try {
+    const teamLeaders = await User.find({ role: 'teamleader', isActive: true })
+      .select('-passwordHash -refreshTokenHash')
+      .populate('teamId', 'name color')
+      .populate('secondaryTeamIds', 'name color')
+      .sort({ name: 1 });
+    
+    res.json({ success: true, teamLeaders, total: teamLeaders.length });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/users/team/:teamId — must be before /:id
 router.get('/team/:teamId', requireRole('teamleader', 'admin'), async (req, res, next) => {
   try {
