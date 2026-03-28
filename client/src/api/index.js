@@ -16,6 +16,7 @@ export const closeTask = (id, data) => api.patch(`/tasks/${id}/close`, data)
 
 // Users
 export const getUsers = (params) => api.get('/users', { params })
+export const exportUsers = (params) => api.get('/users/export', { params, responseType: 'blob' })
 export const getUser = (id) => api.get(`/users/${id}`)
 export const createUser = (data) => api.post('/users', data)
 export const updateUser = (id, data) => api.put(`/users/${id}`, data)

@@ -365,6 +365,97 @@ router.post('/team/:teamId/import-members', requireRole('teamleader', 'admin'), 
   }
 });
 
+// GET /api/users/export — Admin only
+router.get('/export', requireRole('admin'), async (req, res, next) => {
+  try {
+    let filter = {};
+
+    if (req.query.search) {
+      filter.$or = [
+        { name: { $regex: req.query.search, $options: 'i' } },
+        { email: { $regex: req.query.search, $options: 'i' } },
+      ];
+    }
+    if (req.query.role) {
+      const roles = req.query.role.split(',');
+      filter.role = { $in: roles };
+    }
+    if (req.query.teamId) {
+      const teams = req.query.teamId.split(',');
+      filter.$or = [
+        { teamId: { $in: teams } },
+        { secondaryTeamIds: { $in: teams } }
+      ];
+    }
+
+    const users = await User.find(filter)
+      .select('-passwordHash -refreshTokenHash')
+      .populate('teamId', 'name')
+      .populate('secondaryTeamIds', 'name')
+      .populate('referredBy', 'name email')
+      .sort({ createdAt: -1 });
+
+    const requestedFields = req.query.fields ? req.query.fields.split(',') : ['name', 'email', 'role'];
+
+    // Map users to rows
+    const data = users.map(u => {
+      const row = {};
+      
+      const teamNames = u.secondaryTeamIds && u.secondaryTeamIds.length > 0 
+        ? u.secondaryTeamIds.map(t => t.name).join(', ')
+        : '';
+        
+      const getVal = (key) => {
+        switch(key) {
+          case 'name': return u.name || '';
+          case 'email': return u.email || '';
+          case 'phone': return u.phone || '';
+          case 'role': return u.role || '';
+          case 'teamName': return u.teamId ? u.teamId.name : '';
+          case 'secondaryTeams': return teamNames;
+          case 'isActive': return u.isActive ? 'Yes' : 'No';
+          case 'referralCode': return u.referralCode || '';
+          case 'referralCount': return u.referralCount || 0;
+          case 'referredBy': return u.referredBy ? `${u.referredBy.name} (${u.referredBy.email})` : '';
+          case 'department': return u.department || '';
+          case 'year': return u.year || '';
+          case 'college': return u.college || '';
+          case 'createdAt': return u.createdAt ? new Date(u.createdAt).toISOString() : '';
+          case 'lastLogin': return u.lastLogin ? new Date(u.lastLogin).toISOString() : '';
+          default: return u[key] || '';
+        }
+      };
+
+      requestedFields.forEach(field => {
+        // Humanize header
+        const headerMap = {
+          name: 'Name', email: 'Email', phone: 'Phone', role: 'Role',
+          teamName: 'Team', secondaryTeams: 'Secondary Teams', isActive: 'Active',
+          referralCode: 'Referral Code', referralCount: 'Referral Count',
+          referredBy: 'Referred By', department: 'Department', year: 'Year',
+          college: 'College', createdAt: 'Registered At', lastLogin: 'Last Login'
+        };
+        const header = headerMap[field] || field;
+        row[header] = getVal(field);
+      });
+
+      return row;
+    });
+
+    const workbook = xlsx.utils.book_new();
+    const worksheet = xlsx.utils.json_to_sheet(data);
+    xlsx.utils.book_append_sheet(workbook, worksheet, 'Users');
+
+    const buffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+    res.setHeader('Content-Disposition', 'attachment; filename="users_export.xlsx"');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buffer);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/users/:id — after all specific routes
 router.get('/:id', async (req, res, next) => {
   try {

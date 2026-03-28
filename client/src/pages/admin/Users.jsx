@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getUsers, createUser, updateUser, deleteUser, hardDeleteUser } from '../../api'
+import { getUsers, exportUsers, createUser, updateUser, deleteUser, hardDeleteUser } from '../../api'
 import { getTeams } from '../../api'
 import toast from 'react-hot-toast'
 
@@ -156,6 +156,165 @@ function UserForm({ initial, onSubmit, loading }) {
     )
 }
 
+const EXPORT_FIELDS = [
+    { key: 'name', label: 'Name' },
+    { key: 'email', label: 'Email' },
+    { key: 'phone', label: 'Phone' },
+    { key: 'role', label: 'Role' },
+    { key: 'teamName', label: 'Team (Primary)' },
+    { key: 'secondaryTeams', label: 'Secondary Teams' },
+    { key: 'isActive', label: 'Status (Active/Inactive)' },
+    { key: 'department', label: 'Department' },
+    { key: 'year', label: 'Year' },
+    { key: 'college', label: 'College' },
+    { key: 'createdAt', label: 'Registered At' },
+    { key: 'lastLogin', label: 'Last Login' },
+    { key: 'referralCode', label: 'Referral Code (CA)' },
+    { key: 'referralCount', label: 'Referral Count (CA)' },
+    { key: 'referredBy', label: 'Referred By' },
+];
+
+function ExportModal({ open, onClose, filters }) {
+    const { data: teamsData } = useQuery({ queryKey: ['teams'], queryFn: getTeams, enabled: !!open })
+    const teams = teamsData?.data?.teams || []
+
+    const [selectedFields, setSelectedFields] = useState(EXPORT_FIELDS.map(f => f.key));
+    const [selectedRoles, setSelectedRoles] = useState(ROLES);
+    const [exportAllTeams, setExportAllTeams] = useState(true);
+    const [selectedTeams, setSelectedTeams] = useState([]);
+    const [exporting, setExporting] = useState(false);
+
+    if (!open) return null;
+
+    const handleExport = async () => {
+        if (selectedFields.length === 0) return toast.error("Please select at least one column to export.");
+        if (selectedRoles.length === 0) return toast.error("Please select at least one role.");
+        if (!exportAllTeams && selectedTeams.length === 0) return toast.error("Please select at least one team, or choose All Teams.");
+
+        try {
+            setExporting(true);
+            const params = {
+                search: filters.search,
+                fields: selectedFields.join(','),
+                role: selectedRoles.length === ROLES.length ? undefined : selectedRoles.join(','),
+                teamId: exportAllTeams ? undefined : selectedTeams.join(',')
+            };
+            const res = await exportUsers(params);
+            
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'users_export.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            onClose();
+            toast.success("Export successful!");
+        } catch (error) {
+            toast.error("Failed to export users");
+            console.error(error);
+        } finally {
+            setExporting(false);
+        }
+    };
+
+    const toggleField = (key) => setSelectedFields(p => p.includes(key) ? p.filter(k => k !== key) : [...p, key]);
+    const toggleRole = (role) => setSelectedRoles(p => p.includes(role) ? p.filter(r => r !== role) : [...p, role]);
+    const toggleTeam = (teamId) => setSelectedTeams(p => p.includes(teamId) ? p.filter(t => t !== teamId) : [...p, teamId]);
+
+    return (
+        <div className="modal-overlay" onClick={onClose}>
+            <div className="modal max-w-2xl w-full" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-5 border-b border-dark-500">
+                    <h3 className="text-lg font-bold text-white">Export Users Data</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-white text-xl">✕</button>
+                </div>
+                
+                <div className="p-5 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                    
+                    {/* Columns Selection */}
+                    <div className="mb-6">
+                        <div className="flex justify-between items-center mb-2">
+                            <h4 className="text-sm font-semibold text-white">1. Select Columns to Export</h4>
+                            <div className="text-xs space-x-2">
+                                <button onClick={() => setSelectedFields(EXPORT_FIELDS.map(f => f.key))} className="text-primary-400 hover:underline">Select All</button>
+                                <span className="text-gray-600">|</span>
+                                <button onClick={() => setSelectedFields([])} className="text-gray-400 hover:text-gray-300 hover:underline">Deselect All</button>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {EXPORT_FIELDS.map(field => (
+                                <label key={field.key} className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+                                    <input type="checkbox" checked={selectedFields.includes(field.key)} onChange={() => toggleField(field.key)}
+                                        className="w-3.5 h-3.5 rounded border-dark-400 bg-dark-600 text-primary-500 focus:ring-primary-500" />
+                                    {field.label}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Roles Filter Selection */}
+                    <div className="mb-6 pt-4 border-t border-dark-500">
+                        <div className="flex justify-between items-center mb-2">
+                            <h4 className="text-sm font-semibold text-white">2. Filter by Roles</h4>
+                            <div className="text-xs space-x-2">
+                                <button onClick={() => setSelectedRoles(ROLES)} className="text-primary-400 hover:underline">Select All</button>
+                                <span className="text-gray-600">|</span>
+                                <button onClick={() => setSelectedRoles([])} className="text-gray-400 hover:text-gray-300 hover:underline">Deselect All</button>
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                            {ROLES.map(role => (
+                                <label key={role} className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+                                    <input type="checkbox" checked={selectedRoles.includes(role)} onChange={() => toggleRole(role)}
+                                        className="w-3.5 h-3.5 rounded border-dark-400 bg-dark-600 text-primary-500 focus:ring-primary-500" />
+                                    {ROLE_LABELS[role]}
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Teams Filter Selection */}
+                    <div className="pt-4 border-t border-dark-500">
+                        <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-sm font-semibold text-white">3. Filter by Teams</h4>
+                            <label className="flex items-center gap-2 text-xs text-primary-400 cursor-pointer font-medium bg-primary-500/10 px-2 py-1 rounded border border-primary-500/20">
+                                <input type="checkbox" checked={exportAllTeams} onChange={(e) => {
+                                    setExportAllTeams(e.target.checked);
+                                    if (e.target.checked) setSelectedTeams([]);
+                                }} className="w-3.5 h-3.5 rounded border-dark-400 bg-dark-600 text-primary-500 focus:ring-primary-500" />
+                                Export All Teams
+                            </label>
+                        </div>
+                        
+                        {!exportAllTeams && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                {teams.map(team => (
+                                    <label key={team._id} className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
+                                        <input type="checkbox" checked={selectedTeams.includes(team._id)} onChange={() => toggleTeam(team._id)}
+                                            className="w-3.5 h-3.5 rounded border-dark-400 bg-dark-600 text-primary-500 focus:ring-primary-500" />
+                                        {team.name}
+                                    </label>
+                                ))}
+                            </div>
+                        )}
+                        {!exportAllTeams && teams.length === 0 && (
+                            <div className="text-xs text-gray-500">Loading teams...</div>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex justify-end gap-3 p-5 border-t border-dark-500">
+                    <button onClick={onClose} className="btn-secondary">Cancel</button>
+                    <button onClick={handleExport} disabled={exporting || selectedFields.length === 0} className="btn-primary">
+                        {exporting ? '⏳ Exporting...' : '📥 Download Excel'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function AdminUsers() {
     const qc = useQueryClient()
     const [modal, setModal] = useState(null)
@@ -184,7 +343,10 @@ export default function AdminUsers() {
         <div className="space-y-5 animate-fade-in">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h1 className="page-title mb-0 text-xl sm:text-2xl">👥 Users ({total})</h1>
-                <button onClick={() => setModal({ type: 'create' })} className="btn-primary w-full sm:w-auto justify-center">➕ Add User</button>
+                <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <button onClick={() => setModal({ type: 'export' })} className="btn-secondary w-full sm:w-auto justify-center">📤 Export</button>
+                    <button onClick={() => setModal({ type: 'create' })} className="btn-primary w-full sm:w-auto justify-center">➕ Add User</button>
+                </div>
             </div>
 
             {/* Role Tabs */}
@@ -380,6 +542,9 @@ export default function AdminUsers() {
                     />
                 )}
             </Modal>
+
+            {/* Export modal */}
+            <ExportModal open={modal?.type === 'export'} onClose={() => setModal(null)} filters={filters} />
         </div>
     )
 }
