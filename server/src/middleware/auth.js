@@ -1,6 +1,15 @@
 const jwt = require('jsonwebtoken');
 
 const verifyToken = (req, res, next) => {
+  // Check for global lockdown
+  if (process.env.PORTAL_LOCKDOWN === 'true') {
+    return res.status(403).json({ 
+      success: false, 
+      message: 'Portal is currently in lockdown. Access denied.',
+      code: 'PORTAL_LOCKDOWN'
+    });
+  }
+
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ success: false, message: 'No token provided' });

@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext'
 import LoginPage from './pages/LoginPage'
 import NotFound from './pages/NotFound'
 import Unauthorized from './pages/Unauthorized'
+import Lockdown from './pages/Lockdown'
 
 // Layouts
 import AdminLayout from './components/layouts/AdminLayout'
@@ -60,7 +61,14 @@ import MyAttendance from './pages/volunteer/MyAttendance'
 
 function ProtectedRoute({ children, roles }) {
     const { user, loading } = useAuth()
+    
     if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500" /></div>
+    
+    // Check for global lockdown
+    if (import.meta.env.VITE_PORTAL_LOCKDOWN === 'true') {
+        return <Navigate to="/lockdown" replace />
+    }
+
     if (!user) return <Navigate to="/login" replace />
     if (roles && !roles.includes(user.role)) return <Navigate to="/unauthorized" replace />
     return children
@@ -69,6 +77,12 @@ function ProtectedRoute({ children, roles }) {
 function RoleRedirect() {
     const { user, loading } = useAuth()
     if (loading) return null
+
+    // Check for global lockdown
+    if (import.meta.env.VITE_PORTAL_LOCKDOWN === 'true') {
+        return <Navigate to="/lockdown" replace />
+    }
+
     if (!user) return <Navigate to="/login" replace />
     const map = { admin: '/admin', teamleader: '/tl', faculty: '/faculty', volunteer: '/vol', member: '/vol', campus_ambassador: '/vol' }
     return <Navigate to={map[user.role] || '/login'} replace />
@@ -79,6 +93,7 @@ export default function App() {
         <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/unauthorized" element={<Unauthorized />} />
+            <Route path="/lockdown" element={<Lockdown />} />
             <Route path="/" element={<RoleRedirect />} />
 
             {/* Admin */}
