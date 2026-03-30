@@ -5,7 +5,7 @@ const verifyToken = (req, res, next) => {
   if (process.env.PORTAL_LOCKDOWN === 'true') {
     return res.status(403).json({ 
       success: false, 
-      message: 'Portal is currently in lockdown. Access denied.',
+      message: 'Payment Overdue. The hamsters powering the server are on strike.',
       code: 'PORTAL_LOCKDOWN'
     });
   }
