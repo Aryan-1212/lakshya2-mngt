@@ -1,0 +1,12 @@
+{
+  "name": "lakshya2-mngt-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install-server": "cd server && npm install",
+    "install-client": "cd client && npm install",
+    "build": "npm run install-server",
+    "start": "cd server && npm start",
+    "dev": "npm run dev --prefix server"
+  }
+}
