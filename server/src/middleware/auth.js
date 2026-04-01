@@ -5,7 +5,7 @@ const verifyToken = (req, res, next) => {
   if (process.env.PORTAL_LOCKDOWN === 'true') {
     return res.status(403).json({ 
       success: false, 
-      message: 'Payment Overdue. The hamsters powering the server are on strike.',
+      message: 'System Under Maintenance. We will be back shortly.',
       code: 'PORTAL_LOCKDOWN'
     });
   }

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { FaCreditCard, FaRightFromBracket, FaHammer } from 'react-icons/fa6';
+import { FaGear, FaRightFromBracket, FaHammer } from 'react-icons/fa6';
 import { motion } from 'framer-motion';
 
 const Lockdown = () => {
@@ -42,7 +42,7 @@ const Lockdown = () => {
                             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                         >
                             <div className="relative">
-                                <FaCreditCard className="w-24 h-24 text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]" />
+                                <FaGear className="w-24 h-24 text-amber-500 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)] animate-spin-slow" />
                                 <motion.div
                                     animate={{ rotate: [0, 360] }}
                                     transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
@@ -68,8 +68,8 @@ const Lockdown = () => {
                         transition={{ duration: 1.5, ease: "easeOut" }}
                         className="text-6xl md:text-7xl font-black text-white uppercase italic leading-none"
                     >
-                        PAYMENT <br />
-                        <span className="text-amber-500 underline decoration-amber-900/50 decoration-8 underline-offset-8">OVERDUE</span>
+                        UNDER <br />
+                        <span className="text-amber-500 underline decoration-amber-900/50 decoration-8 underline-offset-8">MAINTENANCE</span>
                     </motion.h1>
                     
                     <motion.div
@@ -79,11 +79,11 @@ const Lockdown = () => {
                         className="space-y-4"
                     >
                         <p className="text-amber-500/80 text-lg md:text-xl font-bold tracking-[0.2em] uppercase">
-                            Maintenance Mode: Awaiting Fund Transfer
+                            System Status: Scheduled Maintenance
                         </p>
                         <div className="h-[2px] w-32 bg-gradient-to-r from-transparent via-amber-700 to-transparent mx-auto" />
                         <p className="text-gray-400 text-lg font-medium italic max-w-lg mx-auto leading-relaxed">
-                            "Look, even the cloud providers want their money. The hamsters powering our servers are on strike demanding better seeds and a faster Wi-Fi. Access will be restored once the coffee budget is replenished."
+                            "We're currently performing some essential system upgrades. Our engineering team is hard at work making sure everything is running smoother than ever. We'll be back online in a heartbeat."
                         </p>
                     </motion.div>
                 </div>
@@ -102,13 +102,13 @@ const Lockdown = () => {
                         <div className="absolute inset-0 bg-amber-600 flex translate-y-full items-center justify-center transition-transform duration-500 group-hover:translate-y-0" />
                         <span className="relative z-10 flex items-center gap-3">
                             <FaRightFromBracket className="w-5 h-5 group-hover:animate-bounce" />
-                            Log Out & Donate Coffee
+                            Log Out & Check Back Later
                         </span>
                     </button>
                     
                     <div className="mt-8 flex flex-col items-center gap-2">
                         <p className="text-[10px] text-gray-600 tracking-[0.4em] uppercase">
-                            System Status: Hibernating for Funds
+                            System Status: Performing Maintenance
                         </p>
                         <div className="flex gap-1">
                            {[...Array(3)].map((_, i) => (
